@@ -1,0 +1,158 @@
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/README.md b/README.md[m
+[1mindex e18a492..d0a3ec0 100644[m
+[1m--- a/README.md[m
+[1m+++ b/README.md[m
+[36m@@ -1,44 +1,168 @@[m
+[32m+[m[32m<div align="center">[m
+[32m+[m
+ # LFC Reporting Hub[m
+ [m
+[31m-A Progressive Web App (PWA) designed to help pastors at Living Faith Church (Winners Chapel) stations manage their reporting requirements efficiently.[m
+[32m+[m[32m### Modern reporting infrastructure for church stations.[m
+[32m+[m
+[32m+[m[32mA Progressive Web App designed to simplify reporting workflows for pastors and station administrators — from data collection and reconciliation to validated Excel report generation.[m
+[32m+[m
+[32m+[m[32m<br>[m
+[32m+[m
+[32m+[m[32m![Status](https://img.shields.io/badge/Status-Active-16a34a?style=for-the-badge)[m
+[32m+[m[32m![React](https://img.shields.io/badge/React-TypeScript-3178C6?style=for-the-badge&logo=react&logoColor=white)[m
+[32m+[m[32m![PWA](https://img.shields.io/badge/PWA-Offline--First-6d28d9?style=for-the-badge)[m
+[32m+[m[32m![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)[m
+[32m+[m
+[32m+[m[32m<br>[m
+[32m+[m
+[32m+[m[32m**Collect · Validate · Reconcile · Generate · Audit**[m
+[32m+[m
+[32m+[m[32m</div>[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m## Overview[m
+[32m+[m
+[32m+[m[32m**LFC Reporting Hub** brings the major parts of a station's reporting workflow into one application.[m
+[32m+[m
+[32m+[m[32mInstead of relying on disconnected manual processes, the platform provides structured data entry, flexible input methods, bank-statement processing, report generation, version history, delegate support, and offline-first capabilities in a single PWA.[m
+[32m+[m
+[32m+[m[32m> Built to make recurring reporting more structured, traceable, and efficient.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m## What It Does[m
+[32m+[m
+[32m+[m[32m| Capability | Description |[m
+[32m+[m[32m|---|---|[m
+[32m+[m[32m| **Multiple Input Methods** | Capture information through structured forms, WhatsApp text, voice input, or bank statements. |[m
+[32m+[m[32m| **Report Generation** | Generate Excel reports using configured church reporting templates. |[m
+[32m+[m[32m| **Bank Reconciliation** | Process uploaded bank statements with OCR and flag potential discrepancies. |[m
+[32m+[m[32m| **Version History** | Preserve report changes with a complete version trail instead of hard-deleting data. |[m
+[32m+[m[32m| **Delegate System** | Pair backup delegate accounts through temporary pairing codes. |[m
+[32m+[m[32m| **Offline Support** | Continue working with an offline-first PWA architecture and queued data persistence. |[m
+[32m+[m[32m| **Auto-Compile** | Support scheduled monthly report compilation through database-side scheduling. |[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m## Core Features[m
+[32m+[m
+[32m+[m[32m### Data Collection[m
+[32m+[m
+[32m+[m[32mThe platform supports several ways to get reporting information into the system:[m
+[32m+[m
+[32m+[m[32m- **Manual entry** — structured forms based on canonical reporting fields[m
+[32m+[m[32m- **WhatsApp parsing** — interpret flexible WhatsApp text formats[m
+[32m+[m[32m- **Voice input** — Web Speech API with preview and confirmation before saving[m
+[32m+[m[32m- **Bank statement OCR** — extract information from uploaded statements using Tesseract.js[m
+[32m+[m
+[32m+[m[32m### Report Generation[m
+[32m+[m
+[32m+[m[32mReport generation is handled through Supabase Edge Functions and ExcelJS, allowing the application to produce Excel reports from configured templates and field mappings.[m
+[32m+[m
+[32m+[m[32m### Bank Reconciliation[m
+[32m+[m
+[32m+[m[32mBank statements can be uploaded and processed through OCR. Extracted information can then be compared against report data, with discrepancy flags available for potential mismatches.[m
+[32m+[m
+[32m+[m[32m### Versioned Reporting[m
+[32m+[m
+[32m+[m[32mReports are treated as versioned records rather than disposable documents.[m
+[32m+[m
+[32m+[m[32mThis provides:[m
+[32m+[m
+[32m+[m[32m- Historical versions[m
+[32m+[m[32m- Auditability[m
+[32m+[m[32m- Safer updates[m
+[32m+[m[32m- Server-side timestamps[m
+[32m+[m[32m- Conflict-resolution support[m
+[32m+[m
+[32m+[m[32m### Offline-First Experience[m
+[32m+[m
+[32m+[m[32mThe PWA architecture uses IndexedDB persistence and TanStack Query to support queued work when connectivity is unavailable or unreliable.[m
+[32m+[m
+[32m+[m[32m### Delegate Support[m
+[32m+[m
+[32m+[m[32mTemporary pairing codes allow stations to connect backup delegate accounts without replacing the primary station workflow.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m## Technology[m
+[32m+[m
+[32m+[m[32m| Area | Technology |[m
+[32m+[m[32m|---|---|[m
+[32m+[m[32m| Frontend | React + TypeScript + Vite |[m
+[32m+[m[32m| Styling | Tailwind CSS |[m
+[32m+[m[32m| PWA | vite-plugin-pwa + Workbox |[m
+[32m+[m[32m| State Management | TanStack Query |[m
+[32m+[m[32m| Backend | Supabase |[m
+[32m+[m[32m| Database | PostgreSQL |[m
+[32m+[m[32m| Authentication | Supabase Auth |[m
+[32m+[m[32m| Storage | Supabase Storage |[m
+[32m+[m[32m| Server Functions | Supabase Edge Functions |[m
+[32m+[m[32m| OCR | Tesseract.js |[m
+[32m+[m[32m| Excel Generation | ExcelJS |[m
+[32m+[m[32m| Speech Recognition | Web Speech API |[m
+[32m+[m[32m| Offline Persistence | IndexedDB |[m
+[32m+[m[32m| Scheduling | pg_cron |[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m## Data Model[m
+[32m+[m
+[32m+[m[32mThe application uses a structured reporting model built around stations, templates, reports, versions, and reconciliation data.[m
+[32m+[m
+[32m+[m[32mKey entities include:[m
+[32m+[m
+[32m+[m[32m- `users` — user profiles and subscription status[m
+[32m+[m[32m- `stations` — church station information[m
+[32m+[m[32m- `delegate_pairing_codes` — temporary delegate-linking codes[m
+[32m+[m[32m- `templates` — report template definitions[m
+[32m+[m[32m- `template_versions` — template version history[m
+[32m+[m[32m- `template_field_mappings` — mappings between Excel cells and canonical fields[m
+[32m+[m[32m- `data_fields` — canonical field registry[m
+[32m+[m[32m- `expenditure_categories` — user-defined expenditure categories[m
+[32m+[m[32m- `reports` — logical report records[m
+[32m+[m[32m- `report_versions` — versioned report data and audit trail[m
+[32m+[m[32m- `bank_statements` — uploaded statements and OCR results[m
+[32m+[m[32m- `discrepancy_flags` — reconciliation discrepancies[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m## Security[m
+[32m+[m
+[32m+[m[32mSecurity is part of the application's data architecture.[m
+ [m
+[31m-## Features[m
+[32m+[m[32m- **Row-Level Security (RLS)** is enabled across database tables.[m
+[32m+[m[32m- Users are restricted to data belonging to their authorized station.[m
+[32m+[m[32m- Report data is versioned rather than hard-deleted.[m
+[32m+[m[32m- Server timestamps support conflict resolution.[m
+[32m+[m[32m- Parsed information follows a **confirm-before-save** workflow.[m
+ [m
+[31m-- **Multiple Input Methods**: Manual form entry, WhatsApp text parsing, voice input, and bank statement OCR[m
+[31m-- **Automatic Report Generation**: Excel reports generated using official church templates[m
+[31m-- **Version History**: Complete audit trail of all report changes[m
+[31m-- **Delegate System**: Pairing codes for backup delegate accounts[m
+[31m-- **Offline Support**: PWA with offline-first architecture[m
+[31m-- **Auto-Compile**: Scheduled monthly report compilation[m
+[31m-- **Bank Reconciliation**: OCR-based bank statement processing[m
+[32m+[m[32mAuthentication supports:[m
+ [m
+[31m-## Tech Stack[
