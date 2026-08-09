@@ -1,0 +1,21 @@
+# LFC Reporting Hub
+User-agent: *
+
+# Allow public pages
+Allow: /$
+Allow: /signin
+Allow: /signup
+
+# Block all authenticated/private pages from being indexed
+Disallow: /dashboard
+Disallow: /report/
+Disallow: /reports
+Disallow: /delegates
+Disallow: /settings
+Disallow: /bank-reconciliation
+Disallow: /admin/
+Disallow: /onboarding
+Disallow: /station-reports
+
+# Sitemap
+Sitemap: https://lfc-reporting-hub.vercel.app/sitemap.xml

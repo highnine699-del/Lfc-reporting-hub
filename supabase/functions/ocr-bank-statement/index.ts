@@ -22,7 +22,7 @@ serve(async (req) => {
       )
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client to download the file
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -76,21 +76,13 @@ serve(async (req) => {
     // Remove duplicates and sort
     const uniqueCandidates = [...new Set(candidates)].sort((a, b) => b - a)
 
-    // Store the OCR result
-    const { error: insertError } = await supabase
-      .from('bank_statements')
-      .insert({
-        station_id,
-        file_storage_path: file_path,
-        ocr_raw_text: text,
-        parsed_total: uniqueCandidates.length > 0 ? uniqueCandidates[0] : null,
-      })
-
-    if (insertError) throw insertError
+    // NOTE: The frontend (BankReconciliation.tsx) already inserted the bank_statements row
+    // before calling this function, and will patch it with OCR results after we return.
+    // We do NOT insert here — that would create a duplicate row per upload.
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         ocr_text: text,
         total_candidates: uniqueCandidates,
         confidence: uniqueCandidates.length > 0 ? 'medium' : 'low',

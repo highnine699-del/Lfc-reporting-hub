@@ -49,7 +49,7 @@ export function useAuth() {
         .maybeSingle();
 
       if (error) throw error;
-      setProfile(data); // data is null if no profile exists yet
+      setProfile(data);
     } catch (error) {
       console.error('Error fetching user profile:', error);
       setProfile(null);
@@ -64,5 +64,13 @@ export function useAuth() {
     }
   };
 
-  return { authUser, profile, user: profile, loading, signOut };
+  // Exposed so other pages can force a profile refresh (e.g. after subscription update)
+  const refetchProfile = async () => {
+    const { data: { user: authU } } = await supabase.auth.getUser();
+    if (authU) {
+      await fetchUserProfile(authU.id);
+    }
+  };
+
+  return { authUser, profile, user: profile, loading, signOut, refetchProfile };
 }

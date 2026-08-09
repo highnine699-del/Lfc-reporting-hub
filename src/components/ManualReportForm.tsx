@@ -4,44 +4,97 @@ interface ManualReportFormProps {
   periodType: string;
   startDate: string;
   endDate: string;
+  /** Pre-fill the form with existing data when editing a report */
+  initialData?: Record<string, any>;
   onSubmit: (data: Record<string, any>) => void;
   onCancel: () => void;
 }
 
-export default function ManualReportForm({ periodType: _periodType, startDate: _startDate, endDate: _endDate, onSubmit, onCancel }: ManualReportFormProps) {
-  const [formData, setFormData] = useState<Record<string, any>>({
-    // Attendance
-    adults_male_attendance: '',
-    adults_female_attendance: '',
-    children_male_attendance: '',
-    children_female_attendance: '',
-    children_attendance: '',
-    first_timers: '',
-    new_converts: '',
-    // Spiritual
-    testimonies: '',
-    altar_calls: '',
-    wofbi_attendance: '',
-    water_baptisms: '',
-    holy_ghost_baptisms: '',
-    // Finance Income
-    tithes: '',
-    offerings: '',
-    thanksgiving: '',
-    kcc: '',
-    shiloh_sacrifice: '',
-    project_funds: '',
-    // Expenditure
-    expenditure_items: [{ label: '', amount: '' }],
-  });
+const emptyForm: Record<string, any> = {
+  adults_male_attendance: '',
+  adults_female_attendance: '',
+  children_male_attendance: '',
+  children_female_attendance: '',
+  children_attendance: '',
+  first_timers: '',
+  new_converts: '',
+  testimonies: '',
+  altar_calls: '',
+  wofbi_attendance: '',
+  water_baptisms: '',
+  holy_ghost_baptisms: '',
+  tithes: '',
+  offerings: '',
+  thanksgiving: '',
+  kcc: '',
+  shiloh_sacrifice: '',
+  project_funds: '',
+  expenditure_items: [{ label: '', amount: '' }],
+};
+
+export default function ManualReportForm({ periodType: _periodType, startDate: _startDate, endDate: _endDate, initialData, onSubmit, onCancel }: ManualReportFormProps) {
+  const [formData, setFormData] = useState<Record<string, any>>(
+    initialData ? { ...emptyForm, ...initialData } : emptyForm
+  );
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  // Task 7 — validate no negatives; also clear field-level error on change
+  const handleNumberChange = (field: string, value: string) => {
+    const num = value === '' ? 0 : Number(value);
+    setFormData(prev => {
+      const next = { ...prev, [field]: num };
+
+      // Task 7 — auto-compute children_attendance from male + female when both are set
+      if (field === 'children_male_attendance' || field === 'children_female_attendance') {
+        const male = field === 'children_male_attendance' ? num : (prev.children_male_attendance || 0);
+        const female = field === 'children_female_attendance' ? num : (prev.children_female_attendance || 0);
+        if (male > 0 || female > 0) {
+          next.children_attendance = male + female;
+        }
+      }
+
+      return next;
+    });
+
+    // Clear the error for this field when the user starts correcting it
+    if (validationErrors[field]) {
+      setValidationErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
+    }
+  };
+
+  const validate = (): boolean => {
+    const errors: Record<string, string> = {};
+    const numericFields = [
+      'adults_male_attendance', 'adults_female_attendance',
+      'children_male_attendance', 'children_female_attendance', 'children_attendance',
+      'first_timers', 'new_converts', 'testimonies', 'altar_calls', 'wofbi_attendance',
+      'water_baptisms', 'holy_ghost_baptisms', 'tithes', 'offerings', 'thanksgiving',
+      'kcc', 'shiloh_sacrifice', 'project_funds',
+    ];
+
+    for (const field of numericFields) {
+      const val = formData[field];
+      if (val !== '' && val !== undefined && Number(val) < 0) {
+        errors[field] = 'Cannot be negative';
+      }
+    }
+
+    // Task 7 — children_attendance must equal male + female if all three are filled
+    const male = Number(formData.children_male_attendance) || 0;
+    const female = Number(formData.children_female_attendance) || 0;
+    const combined = Number(formData.children_attendance) || 0;
+    if (male > 0 && female > 0 && combined > 0 && combined !== male + female) {
+      errors['children_attendance'] = `Should equal Children Male (${male}) + Children Female (${female}) = ${male + female}`;
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     onSubmit(formData);
-  };
-
-  const handleNumberChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value ? Number(value) : 0 }));
   };
 
   const addExpenditureItem = () => {
@@ -76,51 +129,70 @@ export default function ManualReportForm({ periodType: _periodType, startDate: _
             <label className="block text-sm font-medium text-gray-700 mb-2">Adult Male</label>
             <input
               type="number"
+              min="0"
               value={formData.adults_male_attendance}
               onChange={(e) => handleNumberChange('adults_male_attendance', e.target.value)}
-              className="input"
+              className={`input ${validationErrors.adults_male_attendance ? 'border-red-400' : ''}`}
               placeholder="0"
             />
+            {validationErrors.adults_male_attendance && <p className="text-xs text-red-500 mt-1">{validationErrors.adults_male_attendance}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Adult Female</label>
             <input
               type="number"
+              min="0"
               value={formData.adults_female_attendance}
               onChange={(e) => handleNumberChange('adults_female_attendance', e.target.value)}
-              className="input"
+              className={`input ${validationErrors.adults_female_attendance ? 'border-red-400' : ''}`}
               placeholder="0"
             />
+            {validationErrors.adults_female_attendance && <p className="text-xs text-red-500 mt-1">{validationErrors.adults_female_attendance}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Children Male</label>
             <input
               type="number"
+              min="0"
               value={formData.children_male_attendance}
               onChange={(e) => handleNumberChange('children_male_attendance', e.target.value)}
-              className="input"
+              className={`input ${validationErrors.children_male_attendance ? 'border-red-400' : ''}`}
               placeholder="0"
             />
+            {validationErrors.children_male_attendance && (
+              <p className="text-xs text-red-500 mt-1">{validationErrors.children_male_attendance}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Children Female</label>
             <input
               type="number"
+              min="0"
               value={formData.children_female_attendance}
               onChange={(e) => handleNumberChange('children_female_attendance', e.target.value)}
-              className="input"
+              className={`input ${validationErrors.children_female_attendance ? 'border-red-400' : ''}`}
               placeholder="0"
             />
+            {validationErrors.children_female_attendance && (
+              <p className="text-xs text-red-500 mt-1">{validationErrors.children_female_attendance}</p>
+            )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Children (Combined)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Children (Combined)
+              <span className="ml-1 text-xs font-normal text-gray-400">— auto-filled from Male + Female</span>
+            </label>
             <input
               type="number"
+              min="0"
               value={formData.children_attendance}
               onChange={(e) => handleNumberChange('children_attendance', e.target.value)}
-              className="input"
+              className={`input ${validationErrors.children_attendance ? 'border-red-400' : ''}`}
               placeholder="0"
             />
+            {validationErrors.children_attendance && (
+              <p className="text-xs text-red-500 mt-1">{validationErrors.children_attendance}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">First Timers</label>

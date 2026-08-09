@@ -44,7 +44,8 @@ serve(async (req) => {
               file_storage_path,
               template_field_mappings (
                 cell_reference,
-                data_field_key
+                data_field_key,
+                sheet_name
               )
             )
           )
@@ -161,10 +162,10 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         fileUrl: signedUrlData.signedUrl,
-        fileName 
+        fileName
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

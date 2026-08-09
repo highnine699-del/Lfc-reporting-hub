@@ -2,7 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { queryClient } from './lib/queryClient';
 import { isSupabaseConfigured } from './lib/supabase';
-import SignIn from './pages/SignIn';
+import Auth from './pages/Auth';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import NewReport from './pages/NewReport';
@@ -10,12 +10,15 @@ import ReportDetail from './pages/ReportDetail';
 import DelegateManagement from './pages/DelegateManagement';
 import Settings from './pages/Settings';
 import AdminTemplateMapping from './pages/AdminTemplateMapping';
+import AllReports from './pages/AllReports';
+import StationReports from './pages/StationReports';
 import BankReconciliation from './pages/BankReconciliation';
+import GenerateReport from './pages/GenerateReport';
 import { useAuth } from './hooks/useAuth';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { authUser, profile, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -23,17 +26,17 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (!authUser) {
     // Genuinely not signed in at all
     return <Navigate to="/signin" replace />;
   }
-  
+
   if (!profile) {
     // Signed in, but onboarding hasn't happened yet
     return <Navigate to="/onboarding" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -71,7 +74,7 @@ function ConfigError() {
         <div className="bg-gray-100 p-4 rounded-lg">
           <p className="text-sm text-gray-700 mb-2">Please add these variables to your <code className="bg-gray-200 px-1 rounded">.env</code> file:</p>
           <code className="text-xs text-gray-600 block bg-gray-50 p-3 rounded border border-gray-200">
-            VITE_SUPABASE_URL=your_supabase_project_url<br/>
+            VITE_SUPABASE_URL=your_supabase_project_url<br />
             VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
           </code>
         </div>
@@ -92,15 +95,19 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signin" element={<Auth />} />
+          <Route path="/signup" element={<Auth />} />
           <Route path="/onboarding" element={<AuthenticatedRoute><Onboarding /></AuthenticatedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/report/new" element={<ProtectedRoute><NewReport /></ProtectedRoute>} />
           <Route path="/report/:id" element={<ProtectedRoute><ReportDetail /></ProtectedRoute>} />
           <Route path="/delegates" element={<ProtectedRoute><DelegateManagement /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><AllReports /></ProtectedRoute>} />
+          <Route path="/station-reports" element={<ProtectedRoute><StationReports /></ProtectedRoute>} />
           <Route path="/bank-reconciliation" element={<ProtectedRoute><BankReconciliation /></ProtectedRoute>} />
           <Route path="/admin/templates" element={<ProtectedRoute><AdminTemplateMapping /></ProtectedRoute>} />
+          <Route path="/generate-report" element={<ProtectedRoute><GenerateReport /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
