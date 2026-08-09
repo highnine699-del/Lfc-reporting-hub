@@ -216,20 +216,20 @@ export default function NewReport() {
   if (showForm) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <header className="bg-white border-b border-gray-200">
+          <div className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <button
               onClick={handleCancel}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="btn btn-ghost text-sm"
             >
               ← Back
             </button>
           </div>
         </header>
 
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-semibold text-gray-900">
               {periodType.charAt(0).toUpperCase() + periodType.slice(1)} Report
             </h1>
             <p className="text-sm text-gray-600 mt-1">
@@ -257,20 +257,20 @@ export default function NewReport() {
   if (parsedData) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <header className="bg-white border-b border-gray-200">
+          <div className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <button
               onClick={handleCancel}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="btn btn-ghost text-sm"
             >
               ← Back
             </button>
           </div>
         </header>
 
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-semibold text-gray-900">
               {periodType.charAt(0).toUpperCase() + periodType.slice(1)} Report
             </h1>
             <p className="text-sm text-gray-600 mt-1">
@@ -297,27 +297,27 @@ export default function NewReport() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => navigate('/dashboard')}
-            className="text-sm text-gray-600 hover:text-gray-900"
+            className="btn btn-ghost text-sm"
           >
             ← Back to Dashboard
           </button>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Create New Report</h1>
+      <main className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Create New Report</h1>
 
-        <div className="bg-white shadow rounded-lg p-6 space-y-6">
+        <div className="card p-6 space-y-8">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Report Period</label>
             <select
               value={periodType}
               onChange={(e) => setPeriodType(e.target.value as any)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
             >
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
@@ -327,14 +327,14 @@ export default function NewReport() {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="input"
               />
             </div>
             <div>
@@ -343,33 +343,97 @@ export default function NewReport() {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="input"
               />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-4">Data Entry Method</label>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { id: 'manual', label: 'Manual Entry', icon: '📝' },
-                { id: 'whatsapp', label: 'Paste WhatsApp Text', icon: '💬' },
-                { id: 'voice', label: 'Voice Input', icon: '🎤' },
-                { id: 'bank', label: 'Upload Bank Statement', icon: '📄' },
-              ].map((method) => (
-                <button
-                  key={method.id}
-                  onClick={() => setInputMethod(method.id as any)}
-                  className={`p-4 border-2 rounded-lg text-left transition-colors ${
-                    inputMethod === method.id
-                      ? 'border-indigo-500 bg-indigo-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="text-2xl mb-2">{method.icon}</div>
-                  <div className="text-sm font-medium text-gray-900">{method.label}</div>
-                </button>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                onClick={() => setInputMethod('manual')}
+                className={`card p-6 text-left transition-colors ${
+                  inputMethod === 'manual'
+                    ? 'border-indigo-500 ring-2 ring-indigo-500'
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414 1.414-1.414L12 0l4 4m0 0l4-4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900">Manual Entry</h3>
+                    <p className="text-sm text-gray-500 mt-1">Enter figures manually</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setInputMethod('whatsapp')}
+                className={`card p-6 text-left transition-colors ${
+                  inputMethod === 'whatsapp'
+                    ? 'border-indigo-500 ring-2 ring-indigo-500'
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h4.01M16 12h4M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900">WhatsApp Text</h3>
+                    <p className="text-sm text-gray-500 mt-1">Paste message</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setInputMethod('voice')}
+                className={`card p-6 text-left transition-colors ${
+                  inputMethod === 'voice'
+                    ? 'border-indigo-500 ring-2 ring-indigo-500'
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v10m-7-7v-10m14 0v10" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900">Voice Input</h3>
+                    <p className="text-sm text-gray-500 mt-1">Speak to enter</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setInputMethod('bank')}
+                className={`card p-6 text-left transition-colors ${
+                  inputMethod === 'bank'
+                    ? 'border-indigo-500 ring-2 ring-indigo-500'
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900">Bank Statement</h3>
+                    <p className="text-sm text-gray-500 mt-1">Upload and reconcile</p>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -381,7 +445,7 @@ export default function NewReport() {
                 onChange={(e) => setWhatsappText(e.target.value)}
                 rows={8}
                 placeholder="Paste your WhatsApp-style report text here..."
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="input"
               />
             </div>
           )}
@@ -390,18 +454,18 @@ export default function NewReport() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Voice Input</label>
               <div className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   {!isRecording ? (
                     <button
                       onClick={startRecording}
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                      className="btn btn-danger"
                     >
                       Start Recording
                     </button>
                   ) : (
                     <button
                       onClick={stopRecording}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                      className="btn btn-secondary"
                     >
                       Stop Recording
                     </button>
@@ -409,7 +473,7 @@ export default function NewReport() {
                   {isRecording && (
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm text-red-600">Recording...</span>
+                      <span className="text-sm text-red-600 font-medium">Recording...</span>
                     </div>
                   )}
                 </div>
@@ -418,7 +482,7 @@ export default function NewReport() {
                   onChange={(e) => setTranscript(e.target.value)}
                   rows={8}
                   placeholder="Your voice transcript will appear here..."
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="input"
                 />
               </div>
             </div>
@@ -427,7 +491,7 @@ export default function NewReport() {
           <button
             onClick={handleContinue}
             disabled={!startDate || !endDate || (inputMethod === 'whatsapp' && !whatsappText) || (inputMethod === 'voice' && !transcript) || parsing}
-            className="w-full px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-primary w-full text-base"
           >
             {parsing ? 'Parsing...' : 'Continue'}
           </button>

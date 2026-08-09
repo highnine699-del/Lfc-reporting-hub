@@ -19,6 +19,19 @@ export default function Onboarding() {
 
     setLoading(true);
     try {
+      // Check if user already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (existingUser) {
+        // User already exists, navigate to dashboard
+        navigate('/dashboard');
+        return;
+      }
+
       if (isDelegate && pairingCode) {
         // Verify pairing code and link to pastor
         const { data: pairing, error: pairingError } = await supabase
@@ -101,87 +114,101 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Complete Your Profile
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {isDelegate ? 'Enter pairing code to link with your pastor' : 'Set up your station account'}
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
-              <input
-                type="text"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Staff ID (Optional)</label>
-              <input
-                type="text"
-                value={staffId}
-                onChange={(e) => setStaffId(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="delegate"
-                checked={isDelegate}
-                onChange={(e) => setIsDelegate(e.target.checked)}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-              <label htmlFor="delegate" className="ml-2 block text-sm text-gray-900">
-                I am a delegate joining an existing station
-              </label>
-            </div>
-
-            {isDelegate && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Pairing Code</label>
-                <input
-                  type="text"
-                  required
-                  value={pairingCode}
-                  onChange={(e) => setPairingCode(e.target.value)}
-                  placeholder="Enter 6-digit code"
-                  maxLength={6}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                />
-              </div>
-            )}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+      <div className="w-full max-w-md">
+        <div className="card-elevated p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+              Complete Your Profile
+            </h1>
+            <p className="text-sm text-gray-600">
+              {isDelegate ? 'Enter pairing code to link with your pastor' : 'Set up your station account'}
+            </p>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : 'Complete Setup'}
-          </button>
-        </form>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <input
+                  id="fullName"
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="input"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
+                </label>
+                <input
+                  id="phoneNumber"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="input"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="staffId" className="block text-sm font-medium text-gray-700 mb-2">
+                  Staff ID <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  id="staffId"
+                  type="text"
+                  value={staffId}
+                  onChange={(e) => setStaffId(e.target.value)}
+                  className="input"
+                />
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="delegate"
+                  checked={isDelegate}
+                  onChange={(e) => setIsDelegate(e.target.checked)}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="delegate" className="ml-2 block text-sm text-gray-900">
+                  I am a delegate joining an existing station
+                </label>
+              </div>
+
+              {isDelegate && (
+                <div>
+                  <label htmlFor="pairingCode" className="block text-sm font-medium text-gray-700 mb-2">
+                    Pairing Code
+                  </label>
+                  <input
+                    id="pairingCode"
+                    type="text"
+                    required
+                    value={pairingCode}
+                    onChange={(e) => setPairingCode(e.target.value)}
+                    placeholder="Enter 6-digit code"
+                    maxLength={6}
+                    className="input"
+                  />
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary w-full"
+            >
+              {loading ? 'Saving...' : 'Complete Setup'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

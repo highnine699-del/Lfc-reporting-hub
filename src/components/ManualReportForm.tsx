@@ -67,217 +67,272 @@ export default function ManualReportForm({ periodType: _periodType, startDate: _
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
       {/* Attendance Section */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Attendance</h3>
-        <div className="grid grid-cols-2 gap-4">
+      <div className="card p-6">
+        <h3 className="text-base font-semibold text-gray-900 mb-6">Attendance</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Adult Male</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Adult Male</label>
             <input
               type="number"
               value={formData.adults_male_attendance}
               onChange={(e) => handleNumberChange('adults_male_attendance', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Adult Female</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Adult Female</label>
             <input
               type="number"
               value={formData.adults_female_attendance}
               onChange={(e) => handleNumberChange('adults_female_attendance', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Children Male</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Children Male</label>
             <input
               type="number"
               value={formData.children_male_attendance}
               onChange={(e) => handleNumberChange('children_male_attendance', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Children Female</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Children Female</label>
             <input
               type="number"
               value={formData.children_female_attendance}
               onChange={(e) => handleNumberChange('children_female_attendance', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Children (Combined)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Children (Combined)</label>
             <input
               type="number"
               value={formData.children_attendance}
               onChange={(e) => handleNumberChange('children_attendance', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">First Timers</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">First Timers</label>
             <input
               type="number"
               value={formData.first_timers}
               onChange={(e) => handleNumberChange('first_timers', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Converts</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">New Converts</label>
             <input
               type="number"
               value={formData.new_converts}
               onChange={(e) => handleNumberChange('new_converts', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
         </div>
       </div>
 
       {/* Spiritual Section */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Spiritual Activity</h3>
-        <div className="grid grid-cols-2 gap-4">
+      <div className="card p-6">
+        <h3 className="text-base font-semibold text-gray-900 mb-6">Spiritual Activity</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Testimonies</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Testimonies</label>
             <input
               type="number"
               value={formData.testimonies}
               onChange={(e) => handleNumberChange('testimonies', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Altar Calls</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Altar Calls</label>
             <input
               type="number"
               value={formData.altar_calls}
               onChange={(e) => handleNumberChange('altar_calls', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">WOFBI Attendance</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">WOFBI Attendance</label>
             <input
               type="number"
               value={formData.wofbi_attendance}
               onChange={(e) => handleNumberChange('wofbi_attendance', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Water Baptisms</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Water Baptisms</label>
             <input
               type="number"
               value={formData.water_baptisms}
               onChange={(e) => handleNumberChange('water_baptisms', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Holy Ghost Baptisms</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Holy Ghost Baptisms</label>
             <input
               type="number"
               value={formData.holy_ghost_baptisms}
               onChange={(e) => handleNumberChange('holy_ghost_baptisms', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              className="input"
+              placeholder="0"
             />
           </div>
         </div>
       </div>
 
       {/* Finance Income Section */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Finance - Income</h3>
-        <div className="grid grid-cols-2 gap-4">
+      <div className="card p-6">
+        <h3 className="text-base font-semibold text-gray-900 mb-6">Finance — Income</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tithes (₦)</label>
-            <input
-              type="number"
-              value={formData.tithes}
-              onChange={(e) => handleNumberChange('tithes', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tithes</label>
+            <div className="flex">
+              <span className="inline-flex items-center px-3 py-2.5 text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg">
+                ₦
+              </span>
+              <input
+                type="number"
+                value={formData.tithes}
+                onChange={(e) => handleNumberChange('tithes', e.target.value)}
+                className="input rounded-l-none"
+                placeholder="0.00"
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Offerings (₦)</label>
-            <input
-              type="number"
-              value={formData.offerings}
-              onChange={(e) => handleNumberChange('offerings', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Offerings</label>
+            <div className="flex">
+              <span className="inline-flex items-center px-3 py-2.5 text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg">
+                ₦
+              </span>
+              <input
+                type="number"
+                value={formData.offerings}
+                onChange={(e) => handleNumberChange('offerings', e.target.value)}
+                className="input rounded-l-none"
+                placeholder="0.00"
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Thanksgiving (₦)</label>
-            <input
-              type="number"
-              value={formData.thanksgiving}
-              onChange={(e) => handleNumberChange('thanksgiving', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Thanksgiving</label>
+            <div className="flex">
+              <span className="inline-flex items-center px-3 py-2.5 text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg">
+                ₦
+              </span>
+              <input
+                type="number"
+                value={formData.thanksgiving}
+                onChange={(e) => handleNumberChange('thanksgiving', e.target.value)}
+                className="input rounded-l-none"
+                placeholder="0.00"
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">KCC (₦)</label>
-            <input
-              type="number"
-              value={formData.kcc}
-              onChange={(e) => handleNumberChange('kcc', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">KCC</label>
+            <div className="flex">
+              <span className="inline-flex items-center px-3 py-2.5 text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg">
+                ₦
+              </span>
+              <input
+                type="number"
+                value={formData.kcc}
+                onChange={(e) => handleNumberChange('kcc', e.target.value)}
+                className="input rounded-l-none"
+                placeholder="0.00"
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Shiloh Sacrifice (₦)</label>
-            <input
-              type="number"
-              value={formData.shiloh_sacrifice}
-              onChange={(e) => handleNumberChange('shiloh_sacrifice', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Shiloh Sacrifice</label>
+            <div className="flex">
+              <span className="inline-flex items-center px-3 py-2.5 text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg">
+                ₦
+              </span>
+              <input
+                type="number"
+                value={formData.shiloh_sacrifice}
+                onChange={(e) => handleNumberChange('shiloh_sacrifice', e.target.value)}
+                className="input rounded-l-none"
+                placeholder="0.00"
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Project Funds (₦)</label>
-            <input
-              type="number"
-              value={formData.project_funds}
-              onChange={(e) => handleNumberChange('project_funds', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">Project Funds</label>
+            <div className="flex">
+              <span className="inline-flex items-center px-3 py-2.5 text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg">
+                ₦
+              </span>
+              <input
+                type="number"
+                value={formData.project_funds}
+                onChange={(e) => handleNumberChange('project_funds', e.target.value)}
+                className="input rounded-l-none"
+                placeholder="0.00"
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Expenditure Section */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Finance - Expenditure (ROF)</h3>
-        <div className="space-y-3">
+      <div className="card p-6">
+        <h3 className="text-base font-semibold text-gray-900 mb-6">Finance — Expenditure (ROF)</h3>
+        <div className="space-y-4">
           {formData.expenditure_items.map((item: any, index: number) => (
-            <div key={index} className="flex gap-2">
+            <div key={index} className="flex gap-3">
               <input
                 type="text"
                 placeholder="Description"
                 value={item.label}
                 onChange={(e) => updateExpenditureItem(index, 'label', e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="input flex-1"
               />
-              <input
-                type="number"
-                placeholder="Amount (₦)"
-                value={item.amount}
-                onChange={(e) => updateExpenditureItem(index, 'amount', e.target.value)}
-                className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
+              <div className="flex w-40">
+                <span className="inline-flex items-center px-3 py-2.5 text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg">
+                  ₦
+                </span>
+                <input
+                  type="number"
+                  placeholder="Amount"
+                  value={item.amount}
+                  onChange={(e) => updateExpenditureItem(index, 'amount', e.target.value)}
+                  className="input rounded-l-none"
+                />
+              </div>
               {formData.expenditure_items.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeExpenditureItem(index)}
-                  className="px-3 py-2 text-red-600 hover:text-red-800"
+                  className="btn btn-ghost px-3"
                 >
-                  Remove
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
                 </button>
               )}
             </div>
@@ -285,7 +340,7 @@ export default function ManualReportForm({ periodType: _periodType, startDate: _
           <button
             type="button"
             onClick={addExpenditureItem}
-            className="text-sm text-indigo-600 hover:text-indigo-800"
+            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
           >
             + Add Expenditure Item
           </button>
@@ -296,14 +351,14 @@ export default function ManualReportForm({ periodType: _periodType, startDate: _
       <div className="flex gap-4">
         <button
           type="submit"
-          className="flex-1 px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="btn btn-primary flex-1 text-base"
         >
           Save Report
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="btn btn-secondary text-base"
         >
           Cancel
         </button>

@@ -13,12 +13,12 @@ export default function AdminTemplateMapping() {
   if (user?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">This page is only accessible to administrators.</p>
+        <div className="card p-8 text-center max-w-md">
+          <h1 className="text-xl font-semibold text-gray-900 mb-4">Access Denied</h1>
+          <p className="text-sm text-gray-600 mb-6">This page is only accessible to administrators.</p>
           <button
             onClick={() => navigate('/dashboard')}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            className="btn btn-primary"
           >
             Back to Dashboard
           </button>
@@ -221,35 +221,35 @@ export default function AdminTemplateMapping() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => navigate('/dashboard')}
-            className="text-sm text-gray-600 hover:text-gray-900"
+            className="btn btn-ghost text-sm"
           >
             ← Back to Dashboard
           </button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Template Mapping</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Template Mapping</h1>
           <p className="text-sm text-gray-600 mt-1">Configure Excel templates and field mappings for report generation</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Panel - Template Selection and Upload */}
           <div className="space-y-6">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Select Template</h2>
+            <div className="card p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Select Template</h2>
               {templatesLoading ? (
-                <div className="text-gray-500">Loading templates...</div>
+                <div className="text-gray-500 text-sm">Loading templates...</div>
               ) : (
                 <select
                   value={selectedTemplate || ''}
                   onChange={(e) => setSelectedTemplate(e.target.value)}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="input"
                 >
                   <option value="">Select a template...</option>
                   {templates?.map((template: any) => (
@@ -261,13 +261,13 @@ export default function AdminTemplateMapping() {
               )}
             </div>
 
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Upload Template File</h2>
+            <div className="card p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Upload Template File</h2>
               <input
                 type="file"
                 accept=".xlsx,.xls"
                 onChange={handleFileUpload}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               />
               {uploadedFile && (
                 <p className="mt-2 text-sm text-gray-600">
@@ -276,8 +276,8 @@ export default function AdminTemplateMapping() {
               )}
             </div>
 
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Field Mappings</h2>
+            <div className="card p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Field Mappings</h2>
               <p className="text-sm text-gray-600 mb-4">
                 Field mappings are auto-detected from your Excel file. Review and edit if needed.
               </p>
@@ -287,7 +287,7 @@ export default function AdminTemplateMapping() {
               ) : (
                 <div className="space-y-3">
                   {Object.entries(fieldMappings).map(([cell, { fieldKey, sheetName }]) => (
-                    <div key={cell} className="flex gap-2 items-center bg-gray-50 p-3 rounded">
+                    <div key={cell} className="flex gap-2 items-center bg-gray-50 p-3 rounded-lg">
                       <div className="flex-1">
                         <p className="text-xs text-gray-500">Cell: {cell}</p>
                         <p className="text-sm font-medium text-gray-900">{fieldKey}</p>
@@ -299,7 +299,7 @@ export default function AdminTemplateMapping() {
                           delete newMappings[cell];
                           setFieldMappings(newMappings);
                         }}
-                        className="text-red-600 hover:text-red-800 text-sm"
+                        className="btn btn-ghost text-sm text-red-600 hover:text-red-800"
                       >
                         Remove
                       </button>
@@ -310,7 +310,7 @@ export default function AdminTemplateMapping() {
               
               <button
                 onClick={() => setFieldMappings({ ...fieldMappings, '': { fieldKey: '', sheetName: 'Sheet1' } })}
-                className="mt-4 text-sm text-indigo-600 hover:text-indigo-800"
+                className="mt-4 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
               >
                 + Add Manual Mapping
               </button>
@@ -319,15 +319,15 @@ export default function AdminTemplateMapping() {
             <button
               onClick={handlePublish}
               disabled={!selectedTemplate || !uploadedFile || uploading}
-              className="w-full px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary w-full text-base"
             >
               {uploading ? 'Publishing...' : 'Publish Template'}
             </button>
           </div>
 
           {/* Right Panel - Available Data Fields */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Available Data Fields</h2>
+          <div className="card p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Available Data Fields</h2>
             {groupedFields ? (
               <div className="space-y-4">
                 {Object.entries(groupedFields).map(([category, fields]: [string, any]) => (
@@ -335,9 +335,9 @@ export default function AdminTemplateMapping() {
                     <h3 className="text-sm font-medium text-gray-900 capitalize mb-2">{category}</h3>
                     <div className="space-y-1">
                       {fields.map((field: any) => (
-                        <div key={field.key} className="text-sm text-gray-600">
-                          <code className="bg-gray-100 px-1 py-0.5 rounded">{field.key}</code>
-                          <span className="ml-2">{field.display_name}</span>
+                        <div key={field.key} className="text-sm text-gray-600 flex items-center gap-2">
+                          <code className="bg-gray-100 px-2 py-1 rounded text-xs">{field.key}</code>
+                          <span>{field.display_name}</span>
                         </div>
                       ))}
                     </div>
@@ -345,7 +345,7 @@ export default function AdminTemplateMapping() {
                 ))}
               </div>
             ) : (
-              <div className="text-gray-500">Loading data fields...</div>
+              <div className="text-gray-500 text-sm">Loading data fields...</div>
             )}
           </div>
         </div>
