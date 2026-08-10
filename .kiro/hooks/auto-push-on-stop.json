@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Auto-commit and push on session stop",
+      "trigger": "Stop",
+      "description": "Automatically stages, commits, and pushes all changes to git when a Kiro session ends, so Vercel always gets the latest code.",
+      "action": {
+        "type": "command",
+        "command": "cd \"c:\\Users\\AY ADVANCE TECH\\Documents\\VIBE_CODER\\Lfc reporting hub\" ; $staged = git diff --cached --name-only 2>$null; $unstaged = git diff --name-only 2>$null; $untracked = git ls-files --others --exclude-standard 2>$null; if ($staged -or $unstaged -or $untracked) { git add src/ supabase/ public/ index.html vite.config.ts postcss.config.js package.json package-lock.json 2>$null; $msg = \"auto: save changes $(Get-Date -Format 'yyyy-MM-dd HH:mm')\"; git commit -m $msg 2>$null; git push 2>$null; Write-Output \"Pushed.\" } else { Write-Output \"Nothing to push.\" }"
+      }
+    }
+  ]
+}
