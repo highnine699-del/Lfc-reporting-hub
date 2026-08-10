@@ -92,6 +92,8 @@ export default function Dashboard() {
     { title: 'Settings', desc: 'Profile, station, subscription', path: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z', onClick: () => navigate('/settings') },
   ];
 
+  const dashGridCss = '.dash-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}@media(min-width:768px){.dash-grid{grid-template-columns:minmax(0,1fr) 320px}}';
+
   return (
     <div style={pageStyle}>
       {/* Ambient glows */}
@@ -153,7 +155,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent entries + feature grid — single col on mobile, 2-col on tablet+ */}
-        <style>{`.dash-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}@media(min-width:768px){.dash-grid{grid-template-columns:minmax(0,1fr) 320px}}`}</style>
+        <style>{dashGridCss}</style>
         <div className="dash-grid">
 
           {/* Recent entries */}
