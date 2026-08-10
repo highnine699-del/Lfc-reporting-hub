@@ -22,9 +22,9 @@ const inp: React.CSSProperties = {
   color: C.textPrimary, fontSize: 14, fontFamily: 'inherit', outline: 'none',
   boxSizing: 'border-box',
 };
-const label: React.CSSProperties = {
+const fieldLabel: React.CSSProperties = {
   display: 'block', fontSize: 11, fontWeight: 600,
-  color: C.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em',
+  color: C.textMuted, marginBottom: 6, textTransform: 'uppercase' as const, letterSpacing: '0.06em',
 };
 
 // ── Collapsible section ───────────────────────────────────────
@@ -258,7 +258,7 @@ export default function Settings() {
   );
 
   const Field = ({ lbl, children }: { lbl: string; children: React.ReactNode }) => (
-    <div><span style={label}>{lbl}</span>{children}</div>
+    <div><span style={fieldLabel}>{lbl}</span>{children}</div>
   );
 
   const subStatus = user?.subscription_status;
@@ -328,14 +328,14 @@ export default function Settings() {
                 <Field lbl="State"><input style={inp} type="text" value={stateName} onChange={e => setStateName(e.target.value)} /></Field>
               </Row>
               <div style={{ marginTop: 20 }}>
-                <span style={label}>Station Category</span>
+                <span style={fieldLabel}>Station Category</span>
                 <Pill
                   options={[{ val: 'mainline', label: 'Mainline' }, { val: 'cotm', label: 'COTM' }, { val: 'cpm', label: 'CPM' }]}
                   value={category} onChange={v => setCategory(v as StationCategory)}
                 />
               </div>
               <div style={{ marginTop: 20 }}>
-                <span style={label}>WOFBI Class</span>
+                <span style={fieldLabel}>WOFBI Class</span>
                 <Pill
                   options={[{ val: 'none', label: 'None' }, { val: 'bcc', label: 'BCC' }, { val: 'lcc', label: 'LCC' }, { val: 'ldc', label: 'LDC' }]}
                   value={wofbiClass} onChange={v => setWofbiClass(v as WofbiClass)}
