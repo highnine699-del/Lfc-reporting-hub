@@ -113,7 +113,7 @@ export default function AllReports() {
 
         {/* Filters */}
         <div style={{ ...glassCard, marginBottom: 20, padding: '16px 20px' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, overflowX: 'hidden' }}>
             <div style={{ position: 'relative', flex: '1 1 200px' }}>
               <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: C.textMuted, pointerEvents: 'none' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -128,8 +128,8 @@ export default function AllReports() {
               <option value="all">All sources</option>
               {Object.entries(SOURCE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
-            <input type="date" value={filterDateFrom} onChange={e => { setFilterDateFrom(e.target.value); setPage(1); }} style={{ ...selectStyle, width: 150 }} />
-            <input type="date" value={filterDateTo} onChange={e => { setFilterDateTo(e.target.value); setPage(1); }} style={{ ...selectStyle, width: 150 }} />
+            <input type="date" value={filterDateFrom} onChange={e => { setFilterDateFrom(e.target.value); setPage(1); }} style={{ ...selectStyle, flex: '1 1 130px', minWidth: 0 }} />
+            <input type="date" value={filterDateTo} onChange={e => { setFilterDateTo(e.target.value); setPage(1); }} style={{ ...selectStyle, flex: '1 1 130px', minWidth: 0 }} />
             {hasActiveFilters && (
               <button onClick={clearFilters} style={{ height: 38, padding: '0 14px', background: 'none', border: `1px solid ${C.border}`, borderRadius: 9, color: C.textMuted, fontSize: 13, cursor: 'pointer' }}>Clear</button>
             )}

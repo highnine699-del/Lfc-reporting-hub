@@ -38,7 +38,54 @@ body,
   background-color: var(--bg);
   color: var(--text-primary);
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── Touch: remove 300ms tap delay on all interactive elements ── */
+button,
+a,
+[role="button"],
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+/* ── Active/press state for touch feedback ─────────────────────── */
+button:active:not(:disabled),
+[role="button"]:active {
+  opacity: 0.82;
+  transform: scale(0.98);
+  transition: transform 0.08s, opacity 0.08s;
+}
+
+/* ── Safe area insets (notch / gesture nav bar) ─────────────────── */
+header {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+main {
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── Prevent horizontal overflow globally ───────────────────────── */
+body,
+#root {
+  max-width: 100vw;
+  overflow-x: hidden;
   min-height: 100%;
+}
+
+/* ── backdrop-filter fallback for older Android (< Chrome 76) ────── */
+@supports not (backdrop-filter: blur(1px)) {
+  .card {
+    background: rgba(18, 21, 28, 0.97) !important;
+  }
+
+  header.bg-white,
+  header {
+    background: rgba(8, 10, 15, 0.99) !important;
+  }
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────── */
@@ -113,9 +160,11 @@ body::after {
   border: 1px solid var(--border) !important;
   border-radius: 10px !important;
   color: var(--text-primary) !important;
-  font-size: 14px;
+  font-size: 16px;
+  /* 16px minimum prevents Android/iOS auto-zoom on focus */
   padding: 0 12px;
-  height: 42px;
+  height: 44px;
+  /* bumped to 44px for touch target compliance */
   width: 100%;
   transition: all 0.15s;
   outline: none;
@@ -155,16 +204,20 @@ select.input option {
   justify-content: center;
   gap: 6px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   border-radius: 10px;
   padding: 0 18px;
-  height: 42px;
+  height: 44px;
+  min-height: 44px;
+  /* Android touch target minimum */
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
   border: none;
   outline: none;
+  /* prevent text size adjustment on orientation change */
+  -webkit-text-size-adjust: 100%;
 }
 
 .btn:disabled {
@@ -313,6 +366,18 @@ label.text-xs {
 /* ── Max-content width utility ─────────────────────────────── */
 .max-w-content {
   max-width: 1200px;
+}
+
+/* ── Global text size adjust (prevents Android orientation zoom) */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ── Tables — always scrollable, with momentum on Android ────── */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
 }
 
 /* ── Tables (preview tables in Generate/AllReports) ──────────*/

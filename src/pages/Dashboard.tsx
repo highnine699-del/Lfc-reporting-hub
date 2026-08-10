@@ -139,20 +139,22 @@ export default function Dashboard() {
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button
               onClick={() => user?.subscription_status === 'expired' ? navigate('/settings') : navigate('/report/new')}
-              style={{ height: 46, padding: '0 24px', background: C.accent, border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+              style={{ flex: '1 1 160px', height: 46, padding: '0 24px', background: C.accent, border: 'none', borderRadius: 12, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
               onMouseEnter={e => (e.currentTarget.style.background = C.accentHover)}
               onMouseLeave={e => (e.currentTarget.style.background = C.accent)}
             >+ Record Service Entry</button>
             <button
               onClick={() => navigate('/generate-report')}
-              style={{ height: 46, padding: '0 24px', background: C.glassLighter, border: `1px solid ${C.border}`, borderRadius: 12, color: C.textPrimary, fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s' }}
+              style={{ flex: '1 1 140px', height: 46, padding: '0 24px', background: C.glassLighter, border: `1px solid ${C.border}`, borderRadius: 12, color: C.textPrimary, fontSize: 14, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
               onMouseLeave={e => (e.currentTarget.style.background = C.glassLighter)}
             >Generate Report</button>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
+        {/* Recent entries + feature grid — single col on mobile, 2-col on tablet+ */}
+        <style>{`.dash-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}@media(min-width:768px){.dash-grid{grid-template-columns:minmax(0,1fr) 320px}}`}</style>
+        <div className="dash-grid">
 
           {/* Recent entries */}
           <div>

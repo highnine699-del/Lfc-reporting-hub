@@ -458,7 +458,7 @@ export default function GenerateReport() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6" style={{ overflowX: 'hidden' }}>
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Generate Report</h1>
           <p className="text-sm text-gray-500 mt-1">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
@@ -120,8 +120,11 @@ export default function WofbiEntry() {
     setNotes(firstNote);
   };
 
-  // Run prefill whenever existing data changes
-  useState(() => { prefillFromExisting(); });
+  // Pre-fill attendance state from DB when existing data loads or month changes
+  useEffect(() => {
+    prefillFromExisting();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existing]);
 
   return (
     <div className="min-h-screen bg-gray-50">

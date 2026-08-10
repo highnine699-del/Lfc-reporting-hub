@@ -149,12 +149,17 @@ export default function DelegateManagement() {
           </div>
 
           {pairingCode && codeExpiry && (
-            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-              <p className="text-xs text-gray-500 mb-1">Pairing code — share this with your delegate:</p>
-              <p className="text-4xl font-mono font-bold text-indigo-900 tracking-widest">
+            <div style={{
+              background: 'rgba(79,70,229,0.12)',
+              border: '1px solid rgba(79,70,229,0.3)',
+              borderRadius: 12,
+              padding: 20,
+            }}>
+              <p style={{ color: '#9CA3AF', fontSize: 12, marginBottom: 8 }}>Pairing code — share this with your delegate:</p>
+              <p style={{ fontSize: 40, fontFamily: 'monospace', fontWeight: 700, color: '#A5B4FC', letterSpacing: '0.18em', margin: '0 0 8px' }}>
                 {pairingCode}
               </p>
-              <p className="text-xs text-gray-500 mt-2">
+              <p style={{ color: '#6B7280', fontSize: 12 }}>
                 Expires at {codeExpiry.toLocaleTimeString()} ({expiresIn} minutes)
               </p>
             </div>
@@ -179,7 +184,13 @@ export default function DelegateManagement() {
               {delegates.map((delegate: any) => (
                 <div
                   key={delegate.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: 12,
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 10,
+                  }}
                 >
                   <div>
                     <p className="text-sm font-medium text-gray-900">{delegate.full_name}</p>

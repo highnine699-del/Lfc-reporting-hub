@@ -301,6 +301,7 @@ export default function AdminTemplateMapping() {
       setUploadedFile(null);
       setColumns([]);
       setSelectedTemplateId('');
+      setShowPublishConfirm(false);
     },
     onError: (err: any) => {
       setErrorMsg(err.message || 'Failed to publish template.');
@@ -524,13 +525,45 @@ export default function AdminTemplateMapping() {
             )}
 
             {/* Publish */}
-            <button
-              onClick={() => publishMutation.mutate()}
-              disabled={!selectedTemplateId || !uploadedFile || columns.length === 0 || publishMutation.isPending}
-              className="btn btn-primary w-full"
-            >
-              {publishMutation.isPending ? 'Publishing…' : 'Publish Template'}
-            </button>
+            {showPublishConfirm ? (
+              <div className="card p-4 border-orange-200 bg-orange-50 space-y-3">
+                <p className="text-sm font-medium text-orange-900">Publish this version?</p>
+                {(() => {
+                  const tpl = templates?.find((t: any) => t.id === selectedTemplateId);
+                  const ver = activeVersions?.find((v: any) => v.template_id === selectedTemplateId);
+                  return (
+                    <p className="text-xs text-orange-700">
+                      This will create a new version for <span className="font-semibold">{tpl?.name ?? 'the selected template'}</span>
+                      {ver ? ` (currently v${ver.version_number} with ${ver.col_count} columns)` : ''} and replace it with <span className="font-semibold">{columns.length} columns</span> from <span className="font-semibold">{uploadedFile?.name}</span>.
+                      Existing service entries are not affected.
+                    </p>
+                  );
+                })()}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setShowPublishConfirm(false); publishMutation.mutate(); }}
+                    disabled={publishMutation.isPending}
+                    className="btn btn-primary flex-1 text-sm"
+                  >
+                    {publishMutation.isPending ? 'Publishing…' : 'Yes, publish'}
+                  </button>
+                  <button
+                    onClick={() => setShowPublishConfirm(false)}
+                    className="btn btn-ghost flex-1 text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowPublishConfirm(true)}
+                disabled={!selectedTemplateId || !uploadedFile || columns.length === 0 || publishMutation.isPending}
+                className="btn btn-primary w-full"
+              >
+                Publish Template
+              </button>
+            )}
           </div>
 
           {/* ── Right panel — column editor ──────────── */}
@@ -563,7 +596,12 @@ export default function AdminTemplateMapping() {
                   </div>
 
                   {columns.map((col, idx) => (
-                    <div key={idx} className="border border-gray-200 rounded-lg p-3 bg-white">
+                    <div key={idx} style={{
+                      border: `1px solid rgba(255,255,255,0.11)`,
+                      borderRadius: 10,
+                      padding: 12,
+                      background: 'rgba(255,255,255,0.03)',
+                    }}>
                       <div className="flex items-start gap-3">
                         {/* Column index badge */}
                         <div className="w-7 h-7 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500 font-mono flex-shrink-0 mt-0.5">
@@ -585,7 +623,8 @@ export default function AdminTemplateMapping() {
                                 type="text"
                                 value={col.display_label}
                                 onChange={e => updateColumn(idx, { display_label: e.target.value })}
-                                className="input text-xs py-1"
+                                className="input"
+                                style={{ fontSize: 14, height: 36, padding: '0 8px' }}
                               />
                             </div>
                           </div>
@@ -597,7 +636,8 @@ export default function AdminTemplateMapping() {
                               type="text"
                               value={col.field_key}
                               onChange={e => updateColumn(idx, { field_key: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
-                              className="input text-xs py-1 font-mono"
+                              className="input"
+                              style={{ fontSize: 14, height: 36, padding: '0 8px', fontFamily: 'monospace' }}
                             />
                           </div>
 
@@ -608,7 +648,8 @@ export default function AdminTemplateMapping() {
                               <select
                                 value={col.aggregation_type}
                                 onChange={e => updateColumn(idx, { aggregation_type: e.target.value as AggregationType })}
-                                className="input text-xs py-1"
+                                className="input"
+                                style={{ fontSize: 14, height: 36, padding: '0 8px' }}
                               >
                                 {AGG_OPTIONS.map(o => (
                                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -638,7 +679,8 @@ export default function AdminTemplateMapping() {
                                 type="text"
                                 value={col.static_source}
                                 onChange={e => updateColumn(idx, { static_source: e.target.value })}
-                                className="input text-xs py-1 font-mono"
+                                className="input"
+                                style={{ fontSize: 14, height: 36, padding: '0 8px', fontFamily: 'monospace' }}
                                 placeholder="e.g. station.name or user.full_name"
                               />
                             </div>

@@ -144,7 +144,7 @@ export default function NewReport() {
   // ── voice recording ──────────────────────────────────────
   const startRecording = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setErrorMsg('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
+      setErrorMsg('Voice input is not supported in this browser or when the app is installed as a PWA. Open the app in Chrome browser (not the installed app) to use voice input.');
       return;
     }
     if (recognition) { try { recognition.stop(); } catch (_) { } }
@@ -346,24 +346,35 @@ export default function NewReport() {
           </div>
         )}
 
-        {/* ── Input method tabs ─────────────────────── */}
-        <div className="card p-1 flex gap-1">
-          {([
-            { key: 'manual', label: 'Manual' },
-            { key: 'whatsapp', label: 'WhatsApp' },
-            { key: 'voice', label: 'Voice' },
-            { key: 'excel', label: 'Excel Import' },
-          ] as const).map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => { setInputMethod(key); setErrorMsg(null); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${inputMethod === key
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-            >
-              {label}
-            </button>
-          ))}
+        {/* ── Input method tabs — scrollable on small screens ── */}
+        <div className="card p-1" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ display: 'flex', gap: 4, minWidth: 'max-content' }}>
+            {([
+              { key: 'manual', label: 'Manual' },
+              { key: 'whatsapp', label: 'WhatsApp' },
+              { key: 'voice', label: 'Voice' },
+              { key: 'excel', label: 'Excel Import' },
+            ] as const).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => { setInputMethod(key); setErrorMsg(null); }}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  background: inputMethod === key ? 'var(--accent)' : 'transparent',
+                  color: inputMethod === key ? '#fff' : 'var(--text-muted)',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ══════════════════════════════════════════════

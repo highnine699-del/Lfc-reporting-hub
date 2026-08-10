@@ -6,14 +6,14 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'mask-icon.svg', 'robots.txt'],
       manifest: {
         name: 'LFC Reporting Hub',
         short_name: 'LFC Hub',
         description: "Digital reporting platform for Living Faith Church stations. Submit attendance, finance and spiritual activity reports.",
-        theme_color: '#4F46E5',
-        background_color: '#ffffff',
+        theme_color: '#080A0F',
+        background_color: '#080A0F',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

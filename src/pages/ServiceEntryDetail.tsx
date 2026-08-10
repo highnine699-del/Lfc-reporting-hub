@@ -377,10 +377,21 @@ export default function ServiceEntryDetail() {
 
       {/* Delete confirmation */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h2 className="text-base font-semibold text-gray-900 mb-2">Delete this entry?</h2>
-            <p className="text-sm text-gray-500 mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div style={{
+            background: 'rgba(18,21,28,0.97)',
+            border: '1px solid rgba(255,255,255,0.11)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            borderRadius: 16,
+            padding: 28,
+            maxWidth: 360,
+            width: 'calc(100% - 32px)',
+            margin: '0 16px',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+          }}>
+            <h2 style={{ color: '#F5F7FA', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Delete this entry?</h2>
+            <p style={{ color: '#9CA3AF', fontSize: 14, marginBottom: 24 }}>
               The entry will be removed from all lists. This action can be reversed by an admin if needed.
             </p>
             <div className="flex gap-3">

@@ -130,8 +130,15 @@ export default function Settings() {
     s.src = 'https://js.paystack.co/v1/inline.js';
     s.async = true;
     s.onload = () => setPaystackReady(true);
-    s.onerror = () => setErrorMsg('Failed to load payment provider.');
+    s.onerror = () => setErrorMsg('Failed to load payment provider. Please check your connection and refresh.');
     document.head.appendChild(s);
+    // Timeout fallback — if script hasn't loaded in 10s, show an error
+    const timeout = setTimeout(() => {
+      if (!window.PaystackPop) {
+        setErrorMsg('Payment provider is taking too long to load. Please check your connection and try again.');
+      }
+    }, 10000);
+    return () => clearTimeout(timeout);
   }, [paystackPublicKey]);
 
   useEffect(() => {
