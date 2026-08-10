@@ -4,43 +4,86 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { formatDate } from '../utils/format';
+import { C, pageStyle, glassCard, glassHeader } from '../lib/theme';
 import type { StationCategory, WofbiClass, FacilityDetails } from '../types';
 
 declare global {
   interface Window {
-    PaystackPop?: {
-      setup: (options: PaystackOptions) => { openIframe: () => void };
-    };
+    PaystackPop?: { setup: (o: any) => { openIframe: () => void } };
   }
-}
-interface PaystackOptions {
-  key: string; email: string; amount: number; currency: string; ref: string;
-  metadata?: Record<string, any>;
-  callback: (response: { reference: string }) => void;
-  onClose: () => void;
 }
 
 const SUBSCRIPTION_AMOUNT_KOBO = 500_000;
 
-// ── small collapsible section ────────────────────────────────
+// ── Shared input style ────────────────────────────────────────
+const inp: React.CSSProperties = {
+  width: '100%', height: 42, borderRadius: 10, padding: '0 12px',
+  background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`,
+  color: C.textPrimary, fontSize: 14, fontFamily: 'inherit', outline: 'none',
+  boxSizing: 'border-box',
+};
+const label: React.CSSProperties = {
+  display: 'block', fontSize: 11, fontWeight: 600,
+  color: C.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em',
+};
+
+// ── Collapsible section ───────────────────────────────────────
 function Section({ title, children, defaultOpen = false }: {
   title: string; children: React.ReactNode; defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="card overflow-hidden">
+    <div style={{ ...glassCard, padding: 0, overflow: 'hidden' }}>
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between p-6 text-left"
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '18px 24px', background: 'none', border: 'none', cursor: 'pointer',
+          color: C.textPrimary,
+        }}
       >
-        <span className="text-base font-semibold text-gray-900">{title}</span>
-        <svg className={`w-5 h-5 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <span style={{ fontSize: 15, fontWeight: 600 }}>{title}</span>
+        {/* tiny inline chevron — no Tailwind, no huge SVG */}
+        <span style={{
+          display: 'inline-block', width: 18, height: 18, flexShrink: 0,
+          transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s',
+          color: C.textMuted,
+        }}>
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="5 8 10 13 15 8" />
+          </svg>
+        </span>
       </button>
-      {open && <div className="px-6 pb-6">{children}</div>}
+      {open && (
+        <div style={{ padding: '0 24px 24px', borderTop: `1px solid ${C.border}` }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Toggle pill for category / WOFBI ─────────────────────────
+function Pill({ options, value, onChange }: {
+  options: { val: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {options.map(o => (
+        <button key={o.val} type="button" onClick={() => onChange(o.val)}
+          style={{
+            padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+            cursor: 'pointer', transition: 'all 0.15s', border: '1px solid',
+            background: value === o.val ? 'rgba(79,70,229,0.2)' : 'rgba(255,255,255,0.04)',
+            borderColor: value === o.val ? 'rgba(79,70,229,0.5)' : C.border,
+            color: value === o.val ? '#A5B4FC' : C.textSecondary,
+          }}>
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -50,11 +93,9 @@ export default function Settings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // ── payment ───────────────────────────────────────────────
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paystackReady, setPaystackReady] = useState(false);
 
-  // ── pastor personal fields ────────────────────────────────
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [staffId, setStaffId] = useState('');
@@ -62,7 +103,6 @@ export default function Settings() {
   const [dor, setDor] = useState('');
   const [savingPersonal, setSavingPersonal] = useState(false);
 
-  // ── station profile fields ────────────────────────────────
   const [stationName, setStationName] = useState('');
   const [stateName, setStateName] = useState('');
   const [category, setCategory] = useState<StationCategory>('cotm');
@@ -78,91 +118,71 @@ export default function Settings() {
   const [childrenHallChairs, setChildrenHallChairs] = useState('');
   const [savingStation, setSavingStation] = useState(false);
 
-  // ── feedback ──────────────────────────────────────────────
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const paystackPublicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
 
-  // Load Paystack script
   useEffect(() => {
     if (!paystackPublicKey) { setPaystackReady(true); return; }
     if (window.PaystackPop) { setPaystackReady(true); return; }
-    const script = document.createElement('script');
-    script.src = 'https://js.paystack.co/v1/inline.js';
-    script.async = true;
-    script.onload = () => setPaystackReady(true);
-    script.onerror = () => setErrorMsg('Failed to load payment provider. Check your internet connection.');
-    document.head.appendChild(script);
+    const s = document.createElement('script');
+    s.src = 'https://js.paystack.co/v1/inline.js';
+    s.async = true;
+    s.onload = () => setPaystackReady(true);
+    s.onerror = () => setErrorMsg('Failed to load payment provider.');
+    document.head.appendChild(s);
   }, [paystackPublicKey]);
 
-  // Pre-fill personal fields from profile
   useEffect(() => {
     if (!user) return;
     setFullName(user.full_name ?? '');
     setPhoneNumber(user.phone_number ?? '');
     setStaffId(user.staff_id ?? '');
-    setYoe(user.yoe ?? '');
-    setDor(user.dor ?? '');
+    setYoe((user as any).yoe ?? '');
+    setDor((user as any).dor ?? '');
   }, [user]);
 
-  // Pre-fill station fields
   useEffect(() => {
     if (!user?.station_id) return;
-    supabase
-      .from('stations')
-      .select('*')
-      .eq('id', user.station_id)
-      .single()
-      .then(({ data }) => {
-        if (!data) return;
-        setStationName(data.name ?? '');
-        setStateName(data.state_name ?? '');
-        setCategory((data.category as StationCategory) ?? 'cotm');
-        setWofbiClass((data.wofbi_class as WofbiClass) ?? 'none');
-        const fd: FacilityDetails = data.facility_details ?? {};
-        setFacilityType(fd.facility_type ?? '');
-        setMainHallCap(fd.main_hall_capacity?.toString() ?? '');
-        setMainHallChairs(fd.main_hall_chairs?.toString() ?? '');
-        setOverflowCap(fd.overflow_capacity?.toString() ?? '');
-        setOverflowChairs(fd.overflow_chairs?.toString() ?? '');
-        setYouthHallCap(fd.youth_hall_capacity?.toString() ?? '');
-        setYouthHallChairs(fd.youth_hall_chairs?.toString() ?? '');
-        setChildrenHallCap(fd.children_hall_capacity?.toString() ?? '');
-        setChildrenHallChairs(fd.children_hall_chairs?.toString() ?? '');
-      });
+    supabase.from('stations').select('*').eq('id', user.station_id).single().then(({ data }) => {
+      if (!data) return;
+      setStationName(data.name ?? '');
+      setStateName(data.state_name ?? '');
+      setCategory((data.category as StationCategory) ?? 'cotm');
+      setWofbiClass((data.wofbi_class as WofbiClass) ?? 'none');
+      const fd: FacilityDetails = data.facility_details ?? {};
+      setFacilityType(fd.facility_type ?? '');
+      setMainHallCap(fd.main_hall_capacity?.toString() ?? '');
+      setMainHallChairs(fd.main_hall_chairs?.toString() ?? '');
+      setOverflowCap(fd.overflow_capacity?.toString() ?? '');
+      setOverflowChairs(fd.overflow_chairs?.toString() ?? '');
+      setYouthHallCap(fd.youth_hall_capacity?.toString() ?? '');
+      setYouthHallChairs(fd.youth_hall_chairs?.toString() ?? '');
+      setChildrenHallCap(fd.children_hall_capacity?.toString() ?? '');
+      setChildrenHallChairs(fd.children_hall_chairs?.toString() ?? '');
+    });
   }, [user?.station_id]);
 
-  const showSuccess = (msg: string) => {
-    setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(null), 4000);
-  };
+  const showSuccess = (msg: string) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(null), 4000); };
 
-  // ── save personal info ────────────────────────────────────
   const handleSavePersonal = async () => {
     if (!user) return;
-    setSavingPersonal(true);
-    setErrorMsg(null);
+    setSavingPersonal(true); setErrorMsg(null);
     try {
-      const { error } = await supabase
-        .from('users')
+      const { error } = await supabase.from('users')
         .update({ full_name: fullName, phone_number: phoneNumber || null, staff_id: staffId || null, yoe: yoe || null, dor: dor || null })
         .eq('id', user.id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       showSuccess('Personal details updated.');
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to save personal details.');
-    } finally {
-      setSavingPersonal(false);
-    }
+    } catch (err: any) { setErrorMsg(err.message || 'Failed to save.'); }
+    finally { setSavingPersonal(false); }
   };
 
-  // ── save station profile ──────────────────────────────────
   const handleSaveStation = async () => {
     if (!user?.station_id) return;
-    setSavingStation(true);
-    setErrorMsg(null);
+    setSavingStation(true); setErrorMsg(null);
     try {
       const facilityDetails: FacilityDetails = {
         facility_type: facilityType || null,
@@ -175,25 +195,20 @@ export default function Settings() {
         children_hall_capacity: childrenHallCap ? Number(childrenHallCap) : null,
         children_hall_chairs: childrenHallChairs ? Number(childrenHallChairs) : null,
       };
-      const { error } = await supabase
-        .from('stations')
+      const { error } = await supabase.from('stations')
         .update({ name: stationName, state_name: stateName, category, wofbi_class: wofbiClass, facility_details: facilityDetails })
         .eq('id', user.station_id);
       if (error) throw error;
       showSuccess('Station profile updated.');
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to save station profile.');
-    } finally {
-      setSavingStation(false);
-    }
+    } catch (err: any) { setErrorMsg(err.message || 'Failed to save.'); }
+    finally { setSavingStation(false); }
   };
 
-  // ── subscription ──────────────────────────────────────────
   const activateSubscription = async (reference: string) => {
     const { error } = await supabase.from('users').update({ subscription_status: 'active' }).eq('id', user!.id);
     if (error) throw error;
     queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-    showSuccess(`Subscription activated! Reference: ${reference}`);
+    showSuccess(`Subscription activated! Ref: ${reference}`);
     setTimeout(() => window.location.reload(), 2000);
   };
 
@@ -203,13 +218,11 @@ export default function Settings() {
     if (!paystackPublicKey) {
       setProcessingPayment(true);
       try { await activateSubscription('TEST_' + Date.now()); }
-      catch (err: any) { setErrorMsg(err.message || 'Failed to activate subscription.'); }
+      catch (err: any) { setErrorMsg(err.message); }
       finally { setProcessingPayment(false); }
       return;
     }
-    if (!window.PaystackPop || !paystackReady) {
-      setErrorMsg('Payment provider not ready. Please try again in a moment.'); return;
-    }
+    if (!window.PaystackPop || !paystackReady) { setErrorMsg('Payment provider not ready.'); return; }
     setProcessingPayment(true);
     let email = '';
     try {
@@ -217,216 +230,186 @@ export default function Settings() {
       email = au?.email ?? '';
       if (!email) throw new Error('Could not determine account email.');
     } catch (err: any) { setErrorMsg(err.message); setProcessingPayment(false); return; }
-
-    const reference = `lfc_${user.id}_${Date.now()}`;
     window.PaystackPop.setup({
       key: paystackPublicKey, email, amount: SUBSCRIPTION_AMOUNT_KOBO, currency: 'NGN',
-      ref: reference, metadata: { user_id: user.id, station_id: user.station_id },
-      callback: async (response) => {
-        try { await activateSubscription(response.reference); }
-        catch (err: any) { setErrorMsg('Payment received but activation failed. Contact support with ref: ' + response.reference); }
+      ref: `lfc_${user.id}_${Date.now()}`,
+      metadata: { user_id: user.id, station_id: user.station_id },
+      callback: async (res: { reference: string }) => {
+        try { await activateSubscription(res.reference); }
+        catch (err: any) { setErrorMsg('Payment received but activation failed. Ref: ' + res.reference); }
         finally { setProcessingPayment(false); }
       },
-      onClose: () => { setProcessingPayment(false); },
+      onClose: () => setProcessingPayment(false),
     }).openIframe();
   };
 
+  // ── shared save button ────────────────────────────────────
+  const SaveBtn = ({ onClick, saving, label: lbl }: { onClick: () => void; saving: boolean; label: string }) => (
+    <button onClick={onClick} disabled={saving}
+      style={{ marginTop: 20, height: 42, padding: '0 24px', background: C.accent, border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, transition: 'all 0.15s' }}>
+      {saving ? 'Saving…' : lbl}
+    </button>
+  );
+
+  const Row = ({ children }: { children: React.ReactNode }) => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginTop: 16 }}>
+      {children}
+    </div>
+  );
+
+  const Field = ({ lbl, children }: { lbl: string; children: React.ReactNode }) => (
+    <div><span style={label}>{lbl}</span>{children}</div>
+  );
+
+  const subStatus = user?.subscription_status;
+  const subBadgeColor = subStatus === 'active' ? '#4ADE80' : subStatus === 'trial' ? '#FDE68A' : '#FCA5A5';
+  const subBadgeBg = subStatus === 'active' ? 'rgba(34,197,94,0.12)' : subStatus === 'trial' ? 'rgba(234,179,8,0.12)' : 'rgba(239,68,68,0.12)';
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button onClick={() => navigate('/dashboard')} className="btn btn-ghost text-sm">
-            ← Back to Dashboard
+    <div style={pageStyle}>
+      {/* ambient glow */}
+      <div style={{ position: 'fixed', top: 0, right: 0, width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(79,70,229,0.06) 0%, transparent 70%)', filter: 'blur(120px)', pointerEvents: 'none', zIndex: 0 }} />
+
+      {/* Header */}
+      <header style={{ ...glassHeader, position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center' }}>
+          <button onClick={() => navigate('/dashboard')}
+            style={{ background: 'none', border: 'none', color: C.textMuted, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            onMouseEnter={e => (e.currentTarget.style.color = C.textPrimary)}
+            onMouseLeave={e => (e.currentTarget.style.color = C.textMuted)}>
+            ← Dashboard
           </button>
         </div>
       </header>
 
-      <main className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your profile, station, and subscription</p>
+      <main style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px 60px', position: 'relative', zIndex: 1 }}>
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ color: C.textPrimary, fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}>Settings</h1>
+          <p style={{ color: C.textMuted, fontSize: 13, marginTop: 4 }}>Manage your profile, station and subscription</p>
         </div>
 
+        {/* Alerts */}
         {errorMsg && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex justify-between items-start">
+          <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)', color: '#FCA5A5', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>{errorMsg}</span>
-            <button onClick={() => setErrorMsg(null)} className="ml-3 text-red-400 hover:text-red-600 flex-shrink-0">✕</button>
+            <button onClick={() => setErrorMsg(null)} style={{ background: 'none', border: 'none', color: '#FCA5A5', cursor: 'pointer', fontSize: 16, lineHeight: 1, marginLeft: 12 }}>✕</button>
           </div>
         )}
         {successMsg && (
-          <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">{successMsg}</div>
+          <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#4ADE80', fontSize: 13 }}>
+            {successMsg}
+          </div>
         )}
 
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-          {/* ── Personal details ──────────────────────── */}
+          {/* ── Personal Details ─────────────────────── */}
           <Section title="Personal Details" defaultOpen>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
-                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="input" />
+            <Row>
+              <Field lbl="Full Name"><input style={inp} type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your full name" /></Field>
+              <Field lbl="Phone Number"><input style={inp} type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="08012345678" /></Field>
+              <Field lbl="Staff ID"><input style={inp} type="text" value={staffId} onChange={e => setStaffId(e.target.value)} placeholder="Optional" /></Field>
+              <Field lbl="Role">
+                <div style={{ height: 42, display: 'flex', alignItems: 'center' }}>
+                  <span style={{ color: C.textPrimary, fontSize: 14, textTransform: 'capitalize' }}>{user?.role ?? '—'}</span>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Phone Number</label>
-                  <input type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="input" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Staff ID</label>
-                  <input type="text" value={staffId} onChange={e => setStaffId(e.target.value)} className="input" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-                  <p className="text-sm text-gray-900 capitalize pt-2.5">{user?.role}</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Year of Entry (YOE)</label>
-                  <input type="text" value={yoe} onChange={e => setYoe(e.target.value)} className="input" placeholder="DD/MM/YYYY" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Date of Resumption (DOR)</label>
-                  <input type="text" value={dor} onChange={e => setDor(e.target.value)} className="input" placeholder="DD/MM/YYYY" />
-                </div>
-              </div>
-              <button onClick={handleSavePersonal} disabled={savingPersonal} className="btn btn-primary text-sm">
-                {savingPersonal ? 'Saving…' : 'Save Personal Details'}
-              </button>
-            </div>
+              </Field>
+              <Field lbl="Year of Entry (YOE)"><input style={inp} type="text" value={yoe} onChange={e => setYoe(e.target.value)} placeholder="DD/MM/YYYY" /></Field>
+              <Field lbl="Date of Resumption (DOR)"><input style={inp} type="text" value={dor} onChange={e => setDor(e.target.value)} placeholder="DD/MM/YYYY" /></Field>
+            </Row>
+            <SaveBtn onClick={handleSavePersonal} saving={savingPersonal} label="Save Personal Details" />
           </Section>
 
-          {/* ── Station profile ───────────────────────── */}
+          {/* ── Station Profile ──────────────────────── */}
           {user?.role !== 'delegate' && (
             <Section title="Station Profile">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Station Name</label>
-                    <input type="text" value={stationName} onChange={e => setStationName(e.target.value)} className="input" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">State</label>
-                    <input type="text" value={stateName} onChange={e => setStateName(e.target.value)} className="input" />
-                  </div>
-                </div>
-
-                {/* Category */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">Station Category</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {([
-                      { val: 'mainline', label: 'Mainline' },
-                      { val: 'cotm', label: 'COTM' },
-                      { val: 'cpm', label: 'CPM' },
-                    ] as const).map(({ val, label }) => (
-                      <button key={val} type="button" onClick={() => setCategory(val)}
-                        className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${category === val
-                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* WOFBI */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">WOFBI Class</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {([
-                      { val: 'none', label: 'None' },
-                      { val: 'bcc', label: 'BCC' },
-                      { val: 'lcc', label: 'LCC' },
-                      { val: 'ldc', label: 'LDC' },
-                    ] as const).map(({ val, label }) => (
-                      <button key={val} type="button" onClick={() => setWofbiClass(val)}
-                        className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${wofbiClass === val
-                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button onClick={handleSaveStation} disabled={savingStation} className="btn btn-primary text-sm">
-                  {savingStation ? 'Saving…' : 'Save Station Profile'}
-                </button>
+              <Row>
+                <Field lbl="Station Name"><input style={inp} type="text" value={stationName} onChange={e => setStationName(e.target.value)} /></Field>
+                <Field lbl="State"><input style={inp} type="text" value={stateName} onChange={e => setStateName(e.target.value)} /></Field>
+              </Row>
+              <div style={{ marginTop: 20 }}>
+                <span style={label}>Station Category</span>
+                <Pill
+                  options={[{ val: 'mainline', label: 'Mainline' }, { val: 'cotm', label: 'COTM' }, { val: 'cpm', label: 'CPM' }]}
+                  value={category} onChange={v => setCategory(v as StationCategory)}
+                />
               </div>
+              <div style={{ marginTop: 20 }}>
+                <span style={label}>WOFBI Class</span>
+                <Pill
+                  options={[{ val: 'none', label: 'None' }, { val: 'bcc', label: 'BCC' }, { val: 'lcc', label: 'LCC' }, { val: 'ldc', label: 'LDC' }]}
+                  value={wofbiClass} onChange={v => setWofbiClass(v as WofbiClass)}
+                />
+              </div>
+              <SaveBtn onClick={handleSaveStation} saving={savingStation} label="Save Station Profile" />
             </Section>
           )}
 
-          {/* ── Facility details ──────────────────────── */}
+          {/* ── Facility Details ─────────────────────── */}
           {user?.role !== 'delegate' && (
             <Section title="Facility Details">
-              <div className="space-y-4">
-                <p className="text-xs text-gray-500">These values appear on your generated Excel reports. Update them whenever your facility changes.</p>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Facility Type</label>
-                  <input type="text" value={facilityType} onChange={e => setFacilityType(e.target.value)}
-                    className="input" placeholder="e.g. TEMPORARY, PERMANENT, RENTED" />
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { label: 'Main Hall Cap.', val: mainHallCap, set: setMainHallCap },
-                    { label: 'Main Hall Chairs', val: mainHallChairs, set: setMainHallChairs },
-                    { label: 'Overflow Cap.', val: overflowCap, set: setOverflowCap },
-                    { label: 'Overflow Chairs', val: overflowChairs, set: setOverflowChairs },
-                    { label: 'Youth Hall Cap.', val: youthHallCap, set: setYouthHallCap },
-                    { label: 'Youth Hall Chairs', val: youthHallChairs, set: setYouthHallChairs },
-                    { label: 'Children Cap.', val: childrenHallCap, set: setChildrenHallCap },
-                    { label: 'Children Chairs', val: childrenHallChairs, set: setChildrenHallChairs },
-                  ].map(({ label, val, set }) => (
-                    <div key={label}>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-                      <input type="number" min="0" value={val} onChange={e => set(e.target.value)}
-                        className="input" placeholder="0" />
-                    </div>
-                  ))}
-                </div>
-                <button onClick={handleSaveStation} disabled={savingStation} className="btn btn-primary text-sm">
-                  {savingStation ? 'Saving…' : 'Save Facility Details'}
-                </button>
+              <p style={{ color: C.textMuted, fontSize: 13, marginTop: 16 }}>These values appear on generated Excel reports. Update whenever your facility changes.</p>
+              <div style={{ marginTop: 16 }}>
+                <Field lbl="Facility Type"><input style={inp} type="text" value={facilityType} onChange={e => setFacilityType(e.target.value)} placeholder="e.g. TEMPORARY, PERMANENT, RENTED" /></Field>
               </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginTop: 16 }}>
+                {[
+                  { lbl: 'Main Hall Cap.', val: mainHallCap, set: setMainHallCap },
+                  { lbl: 'Main Hall Chairs', val: mainHallChairs, set: setMainHallChairs },
+                  { lbl: 'Overflow Cap.', val: overflowCap, set: setOverflowCap },
+                  { lbl: 'Overflow Chairs', val: overflowChairs, set: setOverflowChairs },
+                  { lbl: 'Youth Hall Cap.', val: youthHallCap, set: setYouthHallCap },
+                  { lbl: 'Youth Chairs', val: youthHallChairs, set: setYouthHallChairs },
+                  { lbl: 'Children Cap.', val: childrenHallCap, set: setChildrenHallCap },
+                  { lbl: 'Children Chairs', val: childrenHallChairs, set: setChildrenHallChairs },
+                ].map(({ lbl, val, set }) => (
+                  <Field key={lbl} lbl={lbl}>
+                    <input style={inp} type="number" min="0" value={val} onChange={e => set(e.target.value)} placeholder="0" />
+                  </Field>
+                ))}
+              </div>
+              <SaveBtn onClick={handleSaveStation} saving={savingStation} label="Save Facility Details" />
             </Section>
           )}
 
-          {/* ── Subscription ──────────────────────────── */}
+          {/* ── Subscription ─────────────────────────── */}
           <Section title="Subscription">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500">Status</span>
-                <span className={`badge ${user?.subscription_status === 'active' ? 'badge-success' :
-                  user?.subscription_status === 'trial' ? 'badge-warning' : 'badge-error'}`}>
-                  {user?.subscription_status
-                    ? user.subscription_status.charAt(0).toUpperCase() + user.subscription_status.slice(1)
-                    : '—'}
+            <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ color: C.textMuted, fontSize: 13 }}>Status</span>
+                <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: subBadgeBg, color: subBadgeColor, border: `1px solid ${subBadgeColor}30` }}>
+                  {subStatus ? subStatus.charAt(0).toUpperCase() + subStatus.slice(1) : '—'}
                 </span>
               </div>
-              {user?.subscription_status === 'trial' && user.trial_ends_at && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-0.5">Trial ends</p>
-                  <p className="text-sm text-gray-900">{formatDate(user.trial_ends_at)}</p>
+              {subStatus === 'trial' && user?.trial_ends_at && (
+                <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}` }}>
+                  <p style={{ color: C.textMuted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Trial ends</p>
+                  <p style={{ color: C.textPrimary, fontSize: 14 }}>{formatDate(user.trial_ends_at)}</p>
                 </div>
               )}
-              {(user?.subscription_status === 'trial' || user?.subscription_status === 'expired') && (
-                <div className="border-t border-gray-200 pt-4 space-y-4">
-                  <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-gray-900">Monthly Subscription</p>
-                    <p className="text-sm text-gray-600 mt-0.5">
-                      {paystackPublicKey ? '₦5,000 / month — secure payment via Paystack' : 'Dev/test mode — payment will be simulated'}
-                    </p>
-                  </div>
-                  <button onClick={handleUpgrade} disabled={processingPayment || !paystackReady} className="btn btn-primary w-full">
-                    {processingPayment ? 'Processing…' : !paystackReady ? 'Loading payment…' : 'Upgrade Subscription'}
+              {(subStatus === 'trial' || subStatus === 'expired') && (
+                <div style={{ padding: '16px', borderRadius: 10, background: 'rgba(79,70,229,0.08)', border: '1px solid rgba(79,70,229,0.2)' }}>
+                  <p style={{ color: C.textPrimary, fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Monthly Subscription</p>
+                  <p style={{ color: C.textMuted, fontSize: 13, marginBottom: 16 }}>
+                    {paystackPublicKey ? '₦5,000 / month — secure payment via Paystack' : 'Dev mode — payment will be simulated'}
+                  </p>
+                  <button onClick={handleUpgrade} disabled={processingPayment || !paystackReady}
+                    style={{ height: 42, padding: '0 24px', background: C.accent, border: 'none', borderRadius: 10, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: (processingPayment || !paystackReady) ? 0.6 : 1 }}>
+                    {processingPayment ? 'Processing…' : !paystackReady ? 'Loading…' : 'Upgrade Subscription'}
                   </button>
                 </div>
               )}
             </div>
           </Section>
 
-          {/* ── Sign out ──────────────────────────────── */}
-          <div className="card p-6">
-            <button onClick={signOut} className="btn btn-danger w-full">Sign Out</button>
+          {/* ── Sign Out ─────────────────────────────── */}
+          <div style={{ ...glassCard, padding: '20px 24px' }}>
+            <button onClick={signOut}
+              style={{ width: '100%', height: 42, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, color: '#FCA5A5', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.12)')}>
+              Sign Out
+            </button>
           </div>
 
         </div>
