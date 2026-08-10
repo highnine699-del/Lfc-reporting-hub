@@ -61,29 +61,40 @@ CREATE INDEX IF NOT EXISTS idx_service_entries_station_date
 
 -- ── 5. RLS policies ──────────────────────────────────────────
 
--- template_columns: any authenticated user can read; only admins insert
+-- template_columns: any authenticated user can read/write
 ALTER TABLE template_columns ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Authenticated users can read template_columns"
+DROP POLICY IF EXISTS "Authenticated users can read template_columns"   ON template_columns;
+DROP POLICY IF EXISTS "Authenticated users can insert template_columns"  ON template_columns;
+DROP POLICY IF EXISTS "Authenticated users can update template_columns"  ON template_columns;
+DROP POLICY IF EXISTS "Authenticated users can delete template_columns"  ON template_columns;
+
+CREATE POLICY "Authenticated users can read template_columns"
   ON template_columns FOR SELECT
   USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY IF NOT EXISTS "Authenticated users can insert template_columns"
+CREATE POLICY "Authenticated users can insert template_columns"
   ON template_columns FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL);
 
-CREATE POLICY IF NOT EXISTS "Authenticated users can update template_columns"
+CREATE POLICY "Authenticated users can update template_columns"
   ON template_columns FOR UPDATE
   USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY IF NOT EXISTS "Authenticated users can delete template_columns"
+CREATE POLICY "Authenticated users can delete template_columns"
   ON template_columns FOR DELETE
   USING (auth.uid() IS NOT NULL);
 
 -- service_entries: users can only see/edit their own station's entries
 ALTER TABLE service_entries ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users can read own station service entries"
+DROP POLICY IF EXISTS "Users can read own station service entries"       ON service_entries;
+DROP POLICY IF EXISTS "Users can insert own station service entries"     ON service_entries;
+DROP POLICY IF EXISTS "Users can update own station service entries"     ON service_entries;
+DROP POLICY IF EXISTS "Users can delete own station service entries"     ON service_entries;
+DROP POLICY IF EXISTS "Supervisors can read descendant station service entries" ON service_entries;
+
+CREATE POLICY "Users can read own station service entries"
   ON service_entries FOR SELECT
   USING (
     station_id IN (
@@ -91,7 +102,7 @@ CREATE POLICY IF NOT EXISTS "Users can read own station service entries"
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Users can insert own station service entries"
+CREATE POLICY "Users can insert own station service entries"
   ON service_entries FOR INSERT
   WITH CHECK (
     station_id IN (
@@ -99,7 +110,7 @@ CREATE POLICY IF NOT EXISTS "Users can insert own station service entries"
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Users can update own station service entries"
+CREATE POLICY "Users can update own station service entries"
   ON service_entries FOR UPDATE
   USING (
     station_id IN (
@@ -107,7 +118,7 @@ CREATE POLICY IF NOT EXISTS "Users can update own station service entries"
     )
   );
 
-CREATE POLICY IF NOT EXISTS "Users can delete own station service entries"
+CREATE POLICY "Users can delete own station service entries"
   ON service_entries FOR DELETE
   USING (
     station_id IN (
@@ -116,7 +127,7 @@ CREATE POLICY IF NOT EXISTS "Users can delete own station service entries"
   );
 
 -- Supervisors need to read sub-station entries for report generation
-CREATE POLICY IF NOT EXISTS "Supervisors can read descendant station service entries"
+CREATE POLICY "Supervisors can read descendant station service entries"
   ON service_entries FOR SELECT
   USING (
     EXISTS (
@@ -124,10 +135,8 @@ CREATE POLICY IF NOT EXISTS "Supervisors can read descendant station service ent
       JOIN users u ON u.station_id = s.id
       WHERE u.id = auth.uid()
         AND (
-          -- direct child
           s.id = service_entries.station_id
           OR
-          -- any depth via parent chain (handled in app logic; policy just opens the door)
           service_entries.station_id IN (
             SELECT id FROM stations WHERE parent_station_id = u.station_id
           )

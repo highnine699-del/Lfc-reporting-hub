@@ -52,6 +52,7 @@ export default function NewReport() {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [duplicateWarning, setDuplicateWarning] = useState(false);
 
   // ── whatsapp / voice ────────────────────────────────────
   const [rawText, setRawText] = useState('');
@@ -102,6 +103,23 @@ export default function NewReport() {
   const setField = (key: string, raw: string) => {
     const num = Number(raw);
     setFormData(prev => ({ ...prev, [key]: raw === '' ? '' : isNaN(num) ? raw : num }));
+  };
+
+  // ── duplicate date check ──────────────────────────────────
+  const checkDuplicate = async (date: string) => {
+    if (!user?.station_id || !date) { setDuplicateWarning(false); return; }
+    const { count } = await supabase
+      .from('service_entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('station_id', user.station_id)
+      .eq('service_date', date)
+      .is('deleted_at', null);
+    setDuplicateWarning((count ?? 0) > 0);
+  };
+
+  const handleDateChange = (date: string) => {
+    setServiceDate(date);
+    checkDuplicate(date);
   };
 
   // ── parse whatsapp / voice ───────────────────────────────
@@ -167,7 +185,8 @@ export default function NewReport() {
 
     try {
       const ExcelJS = await import('exceljs');
-      const wb = new ExcelJS.Workbook();
+      const WorkbookClass = (ExcelJS as any).default?.Workbook ?? (ExcelJS as any).Workbook;
+      const wb = new WorkbookClass();
       await wb.xlsx.load(await file.arrayBuffer());
 
       const ws = wb.worksheets[0];
@@ -457,10 +476,21 @@ export default function NewReport() {
               <input
                 type="date"
                 value={serviceDate}
-                onChange={e => setServiceDate(e.target.value)}
+                onChange={e => handleDateChange(e.target.value)}
                 max={new Date().toISOString().slice(0, 10)}
                 className="input max-w-xs"
               />
+              {duplicateWarning && (
+                <div className="mt-2 p-2.5 rounded-lg bg-yellow-50 border border-yellow-200 text-xs text-yellow-800">
+                  ⚠ An entry already exists for this date. You can still save — this will create a second entry for the same day.
+                  <button
+                    onClick={() => navigate('/reports')}
+                    className="ml-2 underline font-medium"
+                  >
+                    View existing entries
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* WhatsApp text input */}

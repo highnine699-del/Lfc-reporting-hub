@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
@@ -45,12 +45,12 @@ interface UserRow {
 function aggregate(values: number[], type: AggregationType): number {
   if (values.length === 0) return 0;
   switch (type) {
-    case 'sum':    return values.reduce((a, b) => a + b, 0);
-    case 'avg':    return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
-    case 'max':    return Math.max(...values);
+    case 'sum': return values.reduce((a, b) => a + b, 0);
+    case 'avg': return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+    case 'max': return Math.max(...values);
     case 'latest': return values[values.length - 1];
-    case 'fixed':  return values[0];
-    default:       return values.reduce((a, b) => a + b, 0);
+    case 'fixed': return values[0];
+    default: return values.reduce((a, b) => a + b, 0);
   }
 }
 
@@ -126,14 +126,58 @@ function collectDescendants(
 }
 
 // ─────────────────────────────────────────────────────────────
-// Month/year helpers
+// Period helpers
 // ─────────────────────────────────────────────────────────────
 const MONTHS = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 5 }, (_, i) => currentYear - i);
+
+type PeriodMode = 'monthly' | 'quarterly' | 'half_year' | 'yearly';
+
+interface PeriodRange { start: string; end: string; label: string; }
+
+function getPeriodRange(mode: PeriodMode, month: number, year: number): PeriodRange {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  if (mode === 'monthly') {
+    const last = new Date(year, month + 1, 0).getDate();
+    return {
+      start: `${year}-${pad(month + 1)}-01`,
+      end: `${year}-${pad(month + 1)}-${pad(last)}`,
+      label: `${MONTHS[month]} ${year}`,
+    };
+  }
+  if (mode === 'quarterly') {
+    const q = Math.floor(month / 3); // 0-3
+    const startMonth = q * 3;
+    const endMonth = startMonth + 2;
+    const last = new Date(year, endMonth + 1, 0).getDate();
+    return {
+      start: `${year}-${pad(startMonth + 1)}-01`,
+      end: `${year}-${pad(endMonth + 1)}-${pad(last)}`,
+      label: `Q${q + 1} ${year}`,
+    };
+  }
+  if (mode === 'half_year') {
+    const isH2 = month >= 6;
+    const startMonth = isH2 ? 6 : 0;
+    const endMonth = isH2 ? 11 : 5;
+    const last = new Date(year, endMonth + 1, 0).getDate();
+    return {
+      start: `${year}-${pad(startMonth + 1)}-01`,
+      end: `${year}-${pad(endMonth + 1)}-${pad(last)}`,
+      label: `${isH2 ? 'H2' : 'H1'} ${year}`,
+    };
+  }
+  // yearly
+  return {
+    start: `${year}-01-01`,
+    end: `${year}-12-31`,
+    label: `${year}`,
+  };
+}
 
 // ─────────────────────────────────────────────────────────────
 // Component
@@ -143,6 +187,7 @@ export default function GenerateReport() {
   const navigate = useNavigate();
 
   const now = new Date();
+  const [periodMode, setPeriodMode] = useState<PeriodMode>('monthly');
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-based
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
@@ -152,10 +197,13 @@ export default function GenerateReport() {
     Array<{ station: StationRow; pastor: UserRow | null; compiled: Record<string, string | number> }> | null
   >(null);
 
-  // Date range for selected month
-  const periodStart = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`;
-  const lastDay = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-  const periodEnd = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  // Derived period range
+  const period = useMemo(
+    () => getPeriodRange(periodMode, selectedMonth, selectedYear),
+    [periodMode, selectedMonth, selectedYear]
+  );
+  const periodStart = period.start;
+  const periodEnd = period.end;
 
   // ── fetch templates ──────────────────────────────────────
   const { data: templates } = useQuery({
@@ -208,13 +256,12 @@ export default function GenerateReport() {
     },
   });
 
-  // Which stations to compile: own station + descendants
+  // Which stations to compile: always own station + ALL descendants
   const targetStationIds = useMemo(() => {
     if (!user?.station_id || !allStations) return [];
     const descendants = collectDescendants(user.station_id, allStations);
-    // If this station has no children, just compile itself
-    if (descendants.length === 0) return [user.station_id];
-    return descendants; // supervisor: compile all children (not self)
+    // Always include own station; add descendants if this is a supervisor
+    return [user.station_id, ...descendants];
   }, [user?.station_id, allStations]);
 
   const isSupervisor = useMemo(() => {
@@ -233,6 +280,7 @@ export default function GenerateReport() {
         .in('station_id', targetStationIds)
         .gte('service_date', periodStart)
         .lte('service_date', periodEnd)
+        .is('deleted_at', null)
         .order('service_date');
       if (error) throw error;
       return data ?? [];
@@ -286,6 +334,16 @@ export default function GenerateReport() {
     setPreviewData(rows);
   };
 
+  // ── auto-build preview whenever inputs are ready ────────
+  // Replaces the manual "Build Preview" button — runs automatically
+  // when both template and entries are loaded.
+  useEffect(() => {
+    if (templateVersion?.cols && allStations && entriesData && selectedTemplateId) {
+      buildPreview();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateVersion, entriesData, pastors, allStations, selectedTemplateId]);
+
   // ── generate Excel ───────────────────────────────────────
   const handleGenerate = async () => {
     if (!selectedTemplateId) { setErrorMsg('Please select a template.'); return; }
@@ -304,7 +362,8 @@ export default function GenerateReport() {
 
       // 2. Load workbook
       const ExcelJS = await import('exceljs');
-      const wb = new ExcelJS.Workbook();
+      const WorkbookClass = (ExcelJS as any).default?.Workbook ?? (ExcelJS as any).Workbook;
+      const wb = new WorkbookClass();
       await wb.xlsx.load(await fileData.arrayBuffer());
 
       // 3. Group columns by sheet
@@ -330,8 +389,8 @@ export default function GenerateReport() {
           if ((sheetNameLower.includes('cpm') || sheetNameLower.includes('10,000')) && cat === 'cpm') return true;
           // If sheet name doesn't match a category keyword, include all stations
           if (!sheetNameLower.includes('mainline') && !sheetNameLower.includes('cotm') &&
-              !sheetNameLower.includes('cpm') && !sheetNameLower.includes('5,000') &&
-              !sheetNameLower.includes('10,000')) return true;
+            !sheetNameLower.includes('cpm') && !sheetNameLower.includes('5,000') &&
+            !sheetNameLower.includes('10,000')) return true;
           return false;
         });
 
@@ -350,7 +409,7 @@ export default function GenerateReport() {
 
         // Write month name into cells that look like month/period headers
         // (cells in the header area containing "month:" or similar)
-        const monthLabel = `${MONTHS[selectedMonth]} ${selectedYear}`;
+        const monthLabel = period.label;
         ws.eachRow((row: any, rn: number) => {
           if (rn >= dataRowStart) return;
           row.eachCell((cell: any) => {
@@ -370,7 +429,7 @@ export default function GenerateReport() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `LFC_Report_${MONTHS[selectedMonth]}_${selectedYear}.xlsx`;
+      a.download = `LFC_Report_${period.label.replace(/\s/g, '_')}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -419,17 +478,44 @@ export default function GenerateReport() {
         {/* ── Step 1: Pick period ──────────────────────── */}
         <div className="card p-6">
           <h2 className="text-base font-semibold text-gray-900 mb-4">1. Select Period</h2>
-          <div className="flex flex-wrap gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Month</label>
-              <select
-                value={selectedMonth}
-                onChange={e => { setSelectedMonth(Number(e.target.value)); setPreviewData(null); }}
-                className="input"
+
+          {/* Period type */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {([
+              { val: 'monthly', label: 'Monthly' },
+              { val: 'quarterly', label: 'Quarterly' },
+              { val: 'half_year', label: 'Half-Yearly' },
+              { val: 'yearly', label: 'Yearly' },
+            ] as const).map(({ val, label }) => (
+              <button
+                key={val}
+                onClick={() => { setPeriodMode(val); setPreviewData(null); }}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${periodMode === val
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
               >
-                {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
-              </select>
-            </div>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-4">
+            {periodMode !== 'yearly' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  {periodMode === 'monthly' ? 'Month' : periodMode === 'quarterly' ? 'Quarter starts in' : 'Half starts in'}
+                </label>
+                <select
+                  value={selectedMonth}
+                  onChange={e => { setSelectedMonth(Number(e.target.value)); setPreviewData(null); }}
+                  className="input"
+                >
+                  {periodMode === 'monthly' && MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
+                  {periodMode === 'quarterly' && [0, 3, 6, 9].map(i => <option key={i} value={i}>Q{Math.floor(i / 3) + 1} — {MONTHS[i]}</option>)}
+                  {periodMode === 'half_year' && [0, 6].map(i => <option key={i} value={i}>{i === 0 ? 'H1 (Jan–Jun)' : 'H2 (Jul–Dec)'}</option>)}
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Year</label>
               <select
@@ -442,13 +528,13 @@ export default function GenerateReport() {
             </div>
           </div>
 
-          {/* Entry count summary */}
+          {/* Period label + entry count */}
           <div className={`mt-4 p-3 rounded-lg text-sm ${entryCount > 0 ? 'bg-green-50 text-green-800' : 'bg-yellow-50 text-yellow-800'}`}>
             {loadingEntries
               ? 'Loading entries…'
               : entryCount > 0
-                ? `✓ ${entryCount} service entr${entryCount !== 1 ? 'ies' : 'y'} found across ${stationCount} station${stationCount !== 1 ? 's' : ''} for ${MONTHS[selectedMonth]} ${selectedYear}`
-                : `No service entries recorded for ${MONTHS[selectedMonth]} ${selectedYear}. Make sure entries have been added before generating.`}
+                ? `✓ ${entryCount} service entr${entryCount !== 1 ? 'ies' : 'y'} across ${stationCount} station${stationCount !== 1 ? 's' : ''} — ${period.label}`
+                : `No entries for ${period.label}. Make sure entries have been added before generating.`}
           </div>
         </div>
 
@@ -483,50 +569,46 @@ export default function GenerateReport() {
           )}
         </div>
 
-        {/* ── Step 3: Preview ──────────────────────────── */}
+        {/* ── Step 3: Preview (auto-built) ─────────────── */}
         <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-gray-900">3. Preview Data</h2>
-            <button
-              onClick={buildPreview}
-              disabled={!selectedTemplateId || !templateVersion || entryCount === 0}
-              className="btn btn-secondary text-sm"
-            >
-              Build Preview
-            </button>
-          </div>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">3. Preview Data</h2>
 
-          {!previewData && (
+          {!selectedTemplateId && (
+            <p className="text-sm text-gray-400">Select a template above to see a preview.</p>
+          )}
+
+          {selectedTemplateId && !templateVersion && (
+            <p className="text-xs text-yellow-600">Loading template columns…</p>
+          )}
+
+          {selectedTemplateId && templateVersion && !previewData && (
             <p className="text-sm text-gray-400">
-              Select a period and template, then click Build Preview to see the compiled data before generating.
+              {loadingEntries ? 'Loading entries…' : 'Building preview…'}
             </p>
           )}
 
           {previewData && previewData.length === 0 && (
-            <p className="text-sm text-yellow-600">No stations with data found for this period.</p>
+            <p className="text-sm text-yellow-600">No stations with data found for {period.label}.</p>
           )}
 
           {previewData && previewData.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <p className="text-xs text-gray-500">
-                {previewData.length} station{previewData.length !== 1 ? 's' : ''} will be written to the Excel file.
-                Each station is one row.
+                {previewData.length} station{previewData.length !== 1 ? 's' : ''} · {period.label} · updates automatically when you change period or template
               </p>
-
-              {/* Scrollable preview table */}
               <div className="overflow-x-auto rounded-lg border border-gray-200">
                 <table className="w-full text-xs">
                   <thead className="bg-gray-50 sticky top-0">
                     <tr>
                       <th className="px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Station</th>
-                      <th className="px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Category</th>
+                      <th className="px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap">Cat.</th>
                       {templateVersion?.cols.slice(0, 8).map(c => (
-                        <th key={c.field_key} className="px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap max-w-24 truncate" title={c.display_label}>
+                        <th key={c.field_key} className="px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap truncate max-w-24" title={c.display_label}>
                           {c.display_label.length > 12 ? c.display_label.slice(0, 12) + '…' : c.display_label}
                         </th>
                       ))}
                       {(templateVersion?.cols.length ?? 0) > 8 && (
-                        <th className="px-3 py-2 text-gray-400">+{(templateVersion?.cols.length ?? 0) - 8} more</th>
+                        <th className="px-3 py-2 text-gray-400">+{(templateVersion?.cols.length ?? 0) - 8}</th>
                       )}
                     </tr>
                   </thead>
@@ -574,7 +656,7 @@ export default function GenerateReport() {
           >
             {generating
               ? 'Generating…'
-              : `Download ${MONTHS[selectedMonth]} ${selectedYear} Report`}
+              : `Download ${period.label} Report`}
           </button>
 
           {!templateVersion?.filePath && selectedTemplateId && (

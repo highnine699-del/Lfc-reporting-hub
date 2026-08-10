@@ -94,9 +94,9 @@ export default function AdminTemplateMapping() {
   const [scanning, setScanning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  // Which sheet the admin picked to scan for data rows
   const [activeSheet, setActiveSheet] = useState('');
   const [availableSheets, setAvailableSheets] = useState<string[]>([]);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   // ── fetch existing templates ─────────────────────────────
   const { data: templates, isLoading: templatesLoading } = useQuery({
@@ -104,11 +104,38 @@ export default function AdminTemplateMapping() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('templates')
-        .select('id, name, period_type')
+        .select('id, name, period_type, current_version_id')
         .order('name');
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  // ── fetch active template version details for summary ────
+  const { data: activeVersions } = useQuery({
+    queryKey: ['active-template-versions'],
+    queryFn: async () => {
+      const versionIds = (templates ?? [])
+        .map((t: any) => t.current_version_id)
+        .filter(Boolean);
+      if (!versionIds.length) return [];
+      const { data, error } = await supabase
+        .from('template_versions')
+        .select('id, template_id, version_number, created_at, file_storage_path')
+        .in('id', versionIds);
+      if (error) throw error;
+      // Also count columns per version
+      const colCounts: Record<string, number> = {};
+      await Promise.all(versionIds.map(async (vid: string) => {
+        const { count } = await supabase
+          .from('template_columns')
+          .select('id', { count: 'exact', head: true })
+          .eq('template_version_id', vid);
+        colCounts[vid] = count ?? 0;
+      }));
+      return (data ?? []).map((v: any) => ({ ...v, col_count: colCounts[v.id] ?? 0 }));
+    },
+    enabled: !!(templates && templates.length > 0),
   });
 
   // ── scan uploaded Excel file ─────────────────────────────
@@ -122,10 +149,11 @@ export default function AdminTemplateMapping() {
 
     try {
       const ExcelJS = await import('exceljs');
-      const wb = new ExcelJS.Workbook();
+      const WorkbookClass = (ExcelJS as any).default?.Workbook ?? (ExcelJS as any).Workbook;
+      const wb = new WorkbookClass();
       await wb.xlsx.load(await file.arrayBuffer());
 
-      const sheets = wb.worksheets.map(ws => ws.name);
+      const sheets = wb.worksheets.map((ws: any) => ws.name);
       setAvailableSheets(sheets);
 
       // Default: use first sheet, or the one matching the template category
@@ -186,7 +214,8 @@ export default function AdminTemplateMapping() {
     setScanning(true);
     try {
       const ExcelJS = await import('exceljs');
-      const wb = new ExcelJS.Workbook();
+      const WorkbookClass = (ExcelJS as any).default?.Workbook ?? (ExcelJS as any).Workbook;
+      const wb = new WorkbookClass();
       await wb.xlsx.load(await uploadedFile.arrayBuffer());
       scanSheet(wb, sheetName);
     } finally {
@@ -282,14 +311,16 @@ export default function AdminTemplateMapping() {
     if (!newTemplateName.trim()) return;
     setCreatingTemplate(true);
     try {
-      const { error } = await supabase.from('templates').insert({
+      const { data, error } = await supabase.from('templates').insert({
         name: newTemplateName.trim(),
         period_type: newTemplatePeriod,
-      });
+      }).select('id').single();
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['templates'] });
+      setSelectedTemplateId(data.id);
       setNewTemplateName('');
-      setSuccessMsg(`Template "${newTemplateName}" created.`);
+      setShowCreateForm(false);
+      setSuccessMsg(`Template "${newTemplateName}" created — now upload an Excel file to add columns.`);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to create template.');
     } finally {
@@ -346,54 +377,94 @@ export default function AdminTemplateMapping() {
           {/* ── Left panel ──────────────────────────── */}
           <div className="lg:col-span-1 space-y-4">
 
-            {/* Create new template */}
+            {/* ── Template selector — card list ────────── */}
             <div className="card p-5">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">Create New Template</h2>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  value={newTemplateName}
-                  onChange={e => setNewTemplateName(e.target.value)}
-                  className="input text-sm"
-                  placeholder="e.g. Monthly Mainline Report"
-                />
-                <select
-                  value={newTemplatePeriod}
-                  onChange={e => setNewTemplatePeriod(e.target.value)}
-                  className="input text-sm"
-                >
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="quarterly">Quarterly</option>
-                  <option value="half_year">Half-Yearly</option>
-                  <option value="yearly">Yearly</option>
-                </select>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-gray-900">Template</h2>
                 <button
-                  onClick={handleCreateTemplate}
-                  disabled={!newTemplateName.trim() || creatingTemplate}
-                  className="btn btn-secondary w-full text-sm"
+                  onClick={() => setShowCreateForm(v => !v)}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
                 >
-                  {creatingTemplate ? 'Creating…' : '+ Create Template'}
+                  {showCreateForm ? '← Back' : '+ New template'}
                 </button>
               </div>
-            </div>
 
-            {/* Select template */}
-            <div className="card p-5">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">Select Template to Update</h2>
-              {templatesLoading ? (
-                <p className="text-sm text-gray-400">Loading…</p>
+              {showCreateForm ? (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={newTemplateName}
+                    onChange={e => setNewTemplateName(e.target.value)}
+                    className="input text-sm"
+                    placeholder="Template name, e.g. Monthly Report"
+                    autoFocus
+                  />
+                  <select
+                    value={newTemplatePeriod}
+                    onChange={e => setNewTemplatePeriod(e.target.value)}
+                    className="input text-sm"
+                  >
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="half_year">Half-Yearly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                  <button
+                    onClick={handleCreateTemplate}
+                    disabled={!newTemplateName.trim() || creatingTemplate}
+                    className="btn btn-primary w-full text-sm"
+                  >
+                    {creatingTemplate ? 'Creating…' : 'Create Template'}
+                  </button>
+                </div>
               ) : (
-                <select
-                  value={selectedTemplateId}
-                  onChange={e => setSelectedTemplateId(e.target.value)}
-                  className="input text-sm"
-                >
-                  <option value="">— choose a template —</option>
-                  {templates?.map((t: any) => (
-                    <option key={t.id} value={t.id}>{t.name} ({t.period_type})</option>
-                  ))}
-                </select>
+                <>
+                  {templatesLoading ? (
+                    <p className="text-sm text-gray-400">Loading…</p>
+                  ) : !templates?.length ? (
+                    <p className="text-sm text-gray-400">
+                      No templates yet. Click <span className="font-medium text-indigo-600">+ New template</span> above to create one.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {templates.map((t: any) => {
+                        const ver = activeVersions?.find((v: any) => v.template_id === t.id);
+                        const isSelected = selectedTemplateId === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => setSelectedTemplateId(t.id)}
+                            className={`w-full text-left p-3 rounded-lg border transition-colors ${isSelected
+                              ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-400'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className={`text-sm font-medium truncate ${isSelected ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                  {t.name}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-0.5 capitalize">
+                                  {t.period_type.replace('_', '-')}
+                                </p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                {ver ? (
+                                  <span className="text-xs text-green-600 font-medium">v{ver.version_number} · {ver.col_count} cols</span>
+                                ) : (
+                                  <span className="text-xs text-yellow-600">No version</span>
+                                )}
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <p className="text-xs text-indigo-600 mt-1.5 font-medium">✓ Selected — upload a new Excel file below to update</p>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
