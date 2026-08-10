@@ -97,6 +97,7 @@ export default function AdminTemplateMapping() {
   const [activeSheet, setActiveSheet] = useState('');
   const [availableSheets, setAvailableSheets] = useState<string[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
 
   // ── fetch existing templates ─────────────────────────────
   const { data: templates, isLoading: templatesLoading } = useQuery({
@@ -112,21 +113,22 @@ export default function AdminTemplateMapping() {
   });
 
   // ── fetch active template version details for summary ────
+  const templateVersionIds = (templates ?? [])
+    .map((t: any) => t.current_version_id)
+    .filter(Boolean) as string[];
+
   const { data: activeVersions } = useQuery({
-    queryKey: ['active-template-versions'],
+    queryKey: ['active-template-versions', templateVersionIds],
     queryFn: async () => {
-      const versionIds = (templates ?? [])
-        .map((t: any) => t.current_version_id)
-        .filter(Boolean);
-      if (!versionIds.length) return [];
+      if (!templateVersionIds.length) return [];
       const { data, error } = await supabase
         .from('template_versions')
         .select('id, template_id, version_number, created_at, file_storage_path')
-        .in('id', versionIds);
+        .in('id', templateVersionIds);
       if (error) throw error;
       // Also count columns per version
       const colCounts: Record<string, number> = {};
-      await Promise.all(versionIds.map(async (vid: string) => {
+      await Promise.all(templateVersionIds.map(async (vid: string) => {
         const { count } = await supabase
           .from('template_columns')
           .select('id', { count: 'exact', head: true })
@@ -135,7 +137,7 @@ export default function AdminTemplateMapping() {
       }));
       return (data ?? []).map((v: any) => ({ ...v, col_count: colCounts[v.id] ?? 0 }));
     },
-    enabled: !!(templates && templates.length > 0),
+    enabled: templateVersionIds.length > 0,
   });
 
   // ── scan uploaded Excel file ─────────────────────────────
@@ -159,7 +161,7 @@ export default function AdminTemplateMapping() {
       // Default: use first sheet, or the one matching the template category
       const firstSheet = sheets[0] ?? 'Sheet1';
       setActiveSheet(firstSheet);
-      scanSheet(wb, firstSheet);
+      await scanSheet(wb, firstSheet);
     } catch (err: any) {
       setErrorMsg('Could not read Excel file: ' + (err.message ?? 'unknown error'));
     } finally {
@@ -171,14 +173,17 @@ export default function AdminTemplateMapping() {
     const ws = wb.getWorksheet(sheetName);
     if (!ws) return;
 
-    // Find the header row — the first row that has at least 3 non-empty cells
-    let headerRowNum = 1;
+    // Find the header row — the first row that has at least 3 non-empty cells.
+    // Use a sentinel of 0 so we stop at the first qualifying row regardless of its number.
+    let headerRowNum = 0;
     ws.eachRow((row: any, rowNum: number) => {
-      const nonEmpty = row.values.filter((v: any) => v != null && v !== '').length;
-      if (nonEmpty >= 3 && headerRowNum === 1) {
+      if (headerRowNum !== 0) return; // already found it
+      const nonEmpty = (row.values as any[]).filter((v: any) => v != null && v !== '').length;
+      if (nonEmpty >= 3) {
         headerRowNum = rowNum;
       }
     });
+    if (headerRowNum === 0) headerRowNum = 1; // fallback
 
     const headerRow = ws.getRow(headerRowNum);
     const dataRowStart = headerRowNum + 1;
@@ -217,7 +222,7 @@ export default function AdminTemplateMapping() {
       const WorkbookClass = (ExcelJS as any).default?.Workbook ?? (ExcelJS as any).Workbook;
       const wb = new WorkbookClass();
       await wb.xlsx.load(await uploadedFile.arrayBuffer());
-      scanSheet(wb, sheetName);
+      await scanSheet(wb, sheetName);
     } finally {
       setScanning(false);
     }

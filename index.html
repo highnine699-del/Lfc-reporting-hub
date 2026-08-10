@@ -1,70 +1,67 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-    <!-- ── Primary SEO ───────────────────────────────────────────────── -->
-    <title>LFC Reporting Hub — Living Faith Church Station Reporting</title>
-    <meta name="description" content="LFC Reporting Hub is the official digital reporting platform for Living Faith Church (Winners' Chapel) stations. Submit attendance, finance, and spiritual activity reports from any device." />
-    <meta name="keywords" content="Living Faith Church, Winners Chapel, LFC, church reporting, station report, attendance, tithe, offering, LFC Hub" />
-    <meta name="author" content="LFC Reporting Hub" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://lfc-reporting-hub.vercel.app/" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-    <!-- ── Open Graph (WhatsApp, Facebook, LinkedIn previews) ────────── -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="LFC Reporting Hub" />
-    <meta property="og:title" content="LFC Reporting Hub — Station Reporting Made Simple" />
-    <meta property="og:description" content="Digital reporting platform for Living Faith Church stations. Submit weekly, monthly, and quarterly reports on attendance, finances, and spiritual activity." />
-    <meta property="og:url" content="https://lfc-reporting-hub.vercel.app/" />
-    <meta property="og:image" content="https://lfc-reporting-hub.vercel.app/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content="en_NG" />
+  <!-- ── Primary SEO ───────────────────────────────────────────────── -->
+  <title>LFC Reporting Hub — Living Faith Church Station Reporting</title>
+  <meta name="description"
+    content="LFC Reporting Hub is the official digital reporting platform for Living Faith Church (Winners' Chapel) stations. Submit attendance, finance, and spiritual activity reports from any device." />
+  <meta name="keywords"
+    content="Living Faith Church, Winners Chapel, LFC, church reporting, station report, attendance, tithe, offering, LFC Hub" />
+  <meta name="author" content="LFC Reporting Hub" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://lfc-reporting-hub.vercel.app/" />
 
-    <!-- ── Twitter / X card ──────────────────────────────────────────── -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="LFC Reporting Hub" />
-    <meta name="twitter:description" content="Digital reporting platform for Living Faith Church stations." />
-    <meta name="twitter:image" content="https://lfc-reporting-hub.vercel.app/og-image.png" />
+  <!-- ── Open Graph (WhatsApp, Facebook, LinkedIn previews) ────────── -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="LFC Reporting Hub" />
+  <meta property="og:title" content="LFC Reporting Hub — Station Reporting Made Simple" />
+  <meta property="og:description"
+    content="Digital reporting platform for Living Faith Church stations. Submit weekly, monthly, and quarterly reports on attendance, finances, and spiritual activity." />
+  <meta property="og:url" content="https://lfc-reporting-hub.vercel.app/" />
+  <meta property="og:image" content="https://lfc-reporting-hub.vercel.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="en_NG" />
 
-    <!-- ── PWA & App Meta ────────────────────────────────────────────── -->
-    <meta name="theme-color" content="#4F46E5" />
-    <meta name="background-color" content="#ffffff" />
-    <meta name="application-name" content="LFC Hub" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="LFC Hub" />
-    <meta name="msapplication-TileColor" content="#4F46E5" />
-    <meta name="msapplication-tap-highlight" content="no" />
+  <!-- ── Twitter / X card ──────────────────────────────────────────── -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LFC Reporting Hub" />
+  <meta name="twitter:description" content="Digital reporting platform for Living Faith Church stations." />
+  <meta name="twitter:image" content="https://lfc-reporting-hub.vercel.app/og-image.png" />
 
-    <!-- ── Icons ─────────────────────────────────────────────────────── -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="mask-icon" href="/mask-icon.svg" color="#4F46E5" />
+  <!-- ── PWA & App Meta ────────────────────────────────────────────── -->
+  <meta name="theme-color" content="#4F46E5" />
+  <meta name="background-color" content="#ffffff" />
+  <meta name="application-name" content="LFC Hub" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="LFC Hub" />
+  <meta name="msapplication-TileColor" content="#4F46E5" />
+  <meta name="msapplication-tap-highlight" content="no" />
 
-    <!-- ── Performance: preconnect to external origins ───────────────── -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Inter loaded with display=swap so text is visible while font loads -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      media="print"
-      onload="this.media='all'"
-    />
-    <noscript>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      />
-    </noscript>
+  <!-- ── Icons ─────────────────────────────────────────────────────── -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="mask-icon" href="/mask-icon.svg" color="#4F46E5" />
 
-    <!-- ── Structured data (Google Rich Results) ─────────────────────── -->
-    <script type="application/ld+json">
+  <!-- ── Performance: preconnect to external origins ───────────────── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Inter loaded with display=swap so text is visible while font loads -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  </noscript>
+
+  <!-- ── Structured data (Google Rich Results) ─────────────────────── -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
@@ -84,23 +81,37 @@
       }
     }
     </script>
-  </head>
-  <body>
-    <!-- Inline critical base styles so first paint isn't invisible -->
-    <style>
-      body {
-        margin: 0;
-        background: #f9fafb;
-        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-      #root {
-        min-height: 100dvh;
-      }
-    </style>
+</head>
 
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<body>
+  <!-- Inline critical base styles so first paint isn't invisible -->
+  <style>
+    body {
+      margin: 0;
+      background: #080A0F;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      /* Prevent horizontal overflow at body level */
+      overflow-x: hidden;
+    }
+
+    #root {
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* Loading skeleton so first paint is dark, not white */
+    #root:empty::after {
+      content: '';
+      display: block;
+      min-height: 100dvh;
+      background: #080A0F;
+    }
+  </style>
+
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
