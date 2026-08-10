@@ -27,3 +27,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# PowerShell stderr redirect artifact
+$null
+
+# Supabase local temp files
+supabase/.temp/
