@@ -99,16 +99,27 @@ export default function AdminTemplateMapping() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
 
-  // ── fetch existing templates ─────────────────────────────
+  // ── fetch existing templates — deduplicate by period_type ──
   const { data: templates, isLoading: templatesLoading } = useQuery({
     queryKey: ['templates'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('templates')
-        .select('id, name, period_type, current_version_id')
-        .order('name');
+        .select('id, name, period_type, current_version_id, created_at')
+        .order('created_at', { ascending: false }); // newest first
       if (error) throw error;
-      return data ?? [];
+
+      // Keep only the first (most recent) row per period_type so duplicate
+      // auto-created templates from the old NewReport flow don't appear twice
+      const seen = new Set<string>();
+      const deduped = (data ?? []).filter((t: any) => {
+        if (seen.has(t.period_type)) return false;
+        seen.add(t.period_type);
+        return true;
+      });
+
+      // Sort alphabetically by name for display
+      return deduped.sort((a: any, b: any) => a.name.localeCompare(b.name));
     },
   });
 
