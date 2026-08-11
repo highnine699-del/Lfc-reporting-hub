@@ -264,24 +264,23 @@ export default function ServiceEntryDetail() {
         {!isEditing && (
           <>
             {columns.length > 0 ? (
-              sortedGroups.map(group => (
-                <div key={group} className="card p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4">{group}</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {grouped[group].map(col => {
-                      const val = entry.data[col.field_key];
-                      if (val === undefined || val === '' || val === null) return null;
-                      return (
-                        <div key={col.field_key} className="bg-gray-50 rounded-lg p-3">
-                          <p className="text-xs text-gray-400 mb-1">{col.display_label}</p>
-                          <p className="text-lg font-semibold text-gray-900">
-                            {isCurrency(col) ? '₦' : ''}{typeof val === 'number' ? val.toLocaleString() : val}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
+              sortedGroups.map(group => (<div key={group} className="card p-5">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">{group}</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {grouped[group].map(col => {
+                    const val = entry.data[col.field_key];
+                    if (val === undefined || val === '' || val === null) return null;
+                    return (
+                      <div key={col.field_key} className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-400 mb-1">{col.display_label}</p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {isCurrency(col) ? '₦' : ''}{typeof val === 'number' ? val.toLocaleString() : val}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
+              </div>
               ))
             ) : (
               // Fallback: no template columns — just show the raw data blob
@@ -299,6 +298,14 @@ export default function ServiceEntryDetail() {
                       </div>
                     ))}
                 </div>
+              </div>
+            )}
+
+            {/* Notes — view */}
+            {entry.notes && (
+              <div className="card p-5">
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Notes</h3>
+                <p style={{ color: '#9CA3AF', fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{entry.notes}</p>
               </div>
             )}
           </>
@@ -373,6 +380,18 @@ export default function ServiceEntryDetail() {
                 </div>
               </div>
             )}
+
+            {/* Notes — edit */}
+            <div className="card p-5">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">Notes <span style={{ color: '#6B7280', fontWeight: 400 }}>(optional)</span></label>
+              <textarea
+                value={editNotes}
+                onChange={e => setEditNotes(e.target.value)}
+                rows={3}
+                className="input"
+                placeholder="Any remarks about this service…"
+              />
+            </div>
           </>
         )}
       </main>

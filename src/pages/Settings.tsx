@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { formatDate } from '../utils/format';
@@ -118,6 +118,24 @@ export default function Settings() {
   const [childrenHallChairs, setChildrenHallChairs] = useState('');
   const [savingStation, setSavingStation] = useState(false);
 
+  // ── parent station ────────────────────────────────────────
+  const [parentStationId, setParentStationId] = useState<string>('');
+  const [savingParent, setSavingParent] = useState(false);
+
+  // All stations for the parent selector (exclude own station)
+  const { data: allStations } = useQuery({
+    queryKey: ['all-stations-for-parent'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stations')
+        .select('id, name, level, state_name')
+        .order('name');
+      if (error) throw error;
+      return (data ?? []).filter((s: any) => s.id !== user?.station_id);
+    },
+    enabled: !!user?.station_id && user?.role !== 'delegate',
+  });
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -152,12 +170,13 @@ export default function Settings() {
 
   useEffect(() => {
     if (!user?.station_id) return;
-    supabase.from('stations').select('*').eq('id', user.station_id).single().then(({ data }) => {
+    supabase.from('stations').select('*, parent_station_id').eq('id', user.station_id).single().then(({ data }) => {
       if (!data) return;
       setStationName(data.name ?? '');
       setStateName(data.state_name ?? '');
       setCategory((data.category as StationCategory) ?? 'cotm');
       setWofbiClass((data.wofbi_class as WofbiClass) ?? 'none');
+      setParentStationId(data.parent_station_id ?? '');
       const fd: FacilityDetails = data.facility_details ?? {};
       setFacilityType(fd.facility_type ?? '');
       setMainHallCap(fd.main_hall_capacity?.toString() ?? '');
@@ -203,7 +222,7 @@ export default function Settings() {
         children_hall_chairs: childrenHallChairs ? Number(childrenHallChairs) : null,
       };
       const { error } = await supabase.from('stations')
-        .update({ name: stationName, state_name: stateName, category, wofbi_class: wofbiClass, facility_details: facilityDetails })
+        .update({ name: stationName, state_name: stateName, category, wofbi_class: wofbiClass, facility_details: facilityDetails, parent_station_id: parentStationId || null })
         .eq('id', user.station_id);
       if (error) throw error;
       showSuccess('Station profile updated.');
@@ -347,6 +366,24 @@ export default function Settings() {
                   options={[{ val: 'none', label: 'None' }, { val: 'bcc', label: 'BCC' }, { val: 'lcc', label: 'LCC' }, { val: 'ldc', label: 'LDC' }]}
                   value={wofbiClass} onChange={v => setWofbiClass(v as WofbiClass)}
                 />
+              </div>
+              <div style={{ marginTop: 20 }}>
+                <span style={fieldLabel}>Supervisor Station (parent)</span>
+                <p style={{ color: C.textMuted, fontSize: 12, marginBottom: 8 }}>
+                  Link your station under a supervisor's station so they can see your entries.
+                </p>
+                <select
+                  value={parentStationId}
+                  onChange={e => setParentStationId(e.target.value)}
+                  style={{ ...inp, height: 44 }}
+                >
+                  <option value="">— None (root station) —</option>
+                  {(allStations ?? []).map((s: any) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}{s.state_name ? ` · ${s.state_name}` : ''} ({s.level})
+                    </option>
+                  ))}
+                </select>
               </div>
               <SaveBtn onClick={handleSaveStation} saving={savingStation} label="Save Station Profile" />
             </Section>
