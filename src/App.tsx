@@ -6,7 +6,6 @@ import Auth from './pages/Auth';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import NewReport from './pages/NewReport';
-import ReportDetail from './pages/ReportDetail';
 import DelegateManagement from './pages/DelegateManagement';
 import Settings from './pages/Settings';
 import AdminTemplateMapping from './pages/AdminTemplateMapping';
@@ -89,7 +88,7 @@ function App() {
           <Route path="/onboarding" element={<AuthenticatedRoute><Onboarding /></AuthenticatedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/report/new" element={<ProtectedRoute><NewReport /></ProtectedRoute>} />
-          <Route path="/report/:id" element={<ProtectedRoute><ReportDetail /></ProtectedRoute>} />
+          <Route path="/report/:id" element={<Navigate to="/reports" replace />} />
           <Route path="/delegates" element={<ProtectedRoute><DelegateManagement /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><AllReports /></ProtectedRoute>} />

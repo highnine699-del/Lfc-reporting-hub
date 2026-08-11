@@ -59,7 +59,7 @@ export default function ServiceEntryDetail() {
       if (!id) return null;
       const { data, error } = await supabase
         .from('service_entries')
-        .select('id, station_id, service_date, data, source, entered_by, created_at, updated_at, template_version_id')
+        .select('id, station_id, service_date, data, source, entered_by, created_at, updated_at, template_version_id, notes')
         .eq('id', id)
         .is('deleted_at', null)
         .single();

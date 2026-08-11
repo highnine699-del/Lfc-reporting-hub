@@ -120,7 +120,6 @@ export default function Settings() {
 
   // ── parent station ────────────────────────────────────────
   const [parentStationId, setParentStationId] = useState<string>('');
-  const [savingParent, setSavingParent] = useState(false);
 
   // All stations for the parent selector (exclude own station)
   const { data: allStations } = useQuery({
