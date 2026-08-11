@@ -6,29 +6,29 @@ import type { CSSProperties } from 'react';
 
 // ── Colours ──────────────────────────────────────────────────
 export const C = {
-  bg:           '#080A0F',
-  textPrimary:  '#F5F7FA',
-  textSecondary:'#9CA3AF',
-  textMuted:    '#6B7280',
-  accent:       '#4F46E5',
-  accentHover:  '#4338CA',
-  border:       'rgba(255, 255, 255, 0.11)',
-  borderFocus:  'rgba(79, 70, 229, 0.35)',
-  glass:        'rgba(18, 21, 28, 0.72)',
-  glassDarker:  'rgba(12, 14, 20, 0.85)',
+  bg: '#080A0F',
+  textPrimary: '#F5F7FA',
+  textSecondary: '#9CA3AF',
+  textMuted: '#6B7280',
+  accent: '#4F46E5',
+  accentHover: '#4338CA',
+  border: 'rgba(255, 255, 255, 0.11)',
+  borderFocus: 'rgba(79, 70, 229, 0.35)',
+  glass: 'rgba(18, 21, 28, 0.72)',
+  glassDarker: 'rgba(12, 14, 20, 0.85)',
   glassLighter: 'rgba(255, 255, 255, 0.035)',
-  success:      'rgba(34, 197, 94, 0.12)',
-  successBorder:'rgba(34, 197, 94, 0.25)',
-  successText:  '#4ADE80',
-  error:        'rgba(239, 68, 68, 0.08)',
-  errorBorder:  'rgba(239, 68, 68, 0.15)',
-  errorText:    '#FCA5A5',
-  warning:      'rgba(234, 179, 8, 0.08)',
-  warningBorder:'rgba(234, 179, 8, 0.2)',
-  warningText:  '#FDE68A',
-  separator:    'rgba(255, 255, 255, 0.09)',
-  highlight:    'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)',
-  accentGlow:   'radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)',
+  success: 'rgba(34, 197, 94, 0.12)',
+  successBorder: 'rgba(34, 197, 94, 0.25)',
+  successText: '#4ADE80',
+  error: 'rgba(239, 68, 68, 0.08)',
+  errorBorder: 'rgba(239, 68, 68, 0.15)',
+  errorText: '#FCA5A5',
+  warning: 'rgba(234, 179, 8, 0.08)',
+  warningBorder: 'rgba(234, 179, 8, 0.2)',
+  warningText: '#FDE68A',
+  separator: 'rgba(255, 255, 255, 0.09)',
+  highlight: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)',
+  accentGlow: 'radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)',
 };
 
 // ── Reusable style objects ────────────────────────────────────
@@ -58,15 +58,6 @@ export const glassCardDark: CSSProperties = {
   ...glassCard,
   background: C.glassDarker,
   boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-};
-
-/** Top highlight line inside a glass card */
-export const glassHighlight: CSSProperties = {
-  position: 'absolute',
-  top: 0, left: '16px', right: '16px', height: '1px',
-  borderRadius: '16px 16px 0 0',
-  background: C.highlight,
-  pointerEvents: 'none',
 };
 
 /** Glass header bar */
@@ -133,11 +124,11 @@ export const dangerBtn: CSSProperties = {
 /** Small badge */
 export const badge = (colour: 'green' | 'yellow' | 'red' | 'indigo' | 'gray'): CSSProperties => {
   const map = {
-    green:  { bg: 'rgba(34,197,94,0.12)',   border: 'rgba(34,197,94,0.25)',   text: '#4ADE80' },
-    yellow: { bg: 'rgba(234,179,8,0.12)',   border: 'rgba(234,179,8,0.25)',   text: '#FDE68A' },
-    red:    { bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.25)',   text: '#FCA5A5' },
-    indigo: { bg: 'rgba(79,70,229,0.15)',   border: 'rgba(79,70,229,0.3)',    text: '#A5B4FC' },
-    gray:   { bg: 'rgba(255,255,255,0.06)', border: C.border,                text: C.textSecondary },
+    green: { bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.25)', text: '#4ADE80' },
+    yellow: { bg: 'rgba(234,179,8,0.12)', border: 'rgba(234,179,8,0.25)', text: '#FDE68A' },
+    red: { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.25)', text: '#FCA5A5' },
+    indigo: { bg: 'rgba(79,70,229,0.15)', border: 'rgba(79,70,229,0.3)', text: '#A5B4FC' },
+    gray: { bg: 'rgba(255,255,255,0.06)', border: C.border, text: C.textSecondary },
   };
   const { bg, border, text } = map[colour];
   return {
@@ -148,7 +139,7 @@ export const badge = (colour: 'green' | 'yellow' | 'red' | 'indigo' | 'gray'): C
   };
 };
 
-/** Focus handlers for inputs */
+/** Focus handlers for inputs — kept for external use if needed */
 export const inputFocus = (el: HTMLElement) => {
   (el as HTMLInputElement).style.borderColor = C.borderFocus;
   (el as HTMLInputElement).style.background = 'rgba(255,255,255,0.05)';

@@ -16,6 +16,7 @@ import BankReconciliation from './pages/BankReconciliation';
 import GenerateReport from './pages/GenerateReport';
 import ServiceEntryDetail from './pages/ServiceEntryDetail';
 import WofbiEntry from './pages/WofbiEntry';
+import DiscrepancyFlags from './pages/DiscrepancyFlags';
 import { useAuth } from './hooks/useAuth';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -98,6 +99,7 @@ function App() {
           <Route path="/generate-report" element={<ProtectedRoute><GenerateReport /></ProtectedRoute>} />
           <Route path="/entry/:id" element={<ProtectedRoute><ServiceEntryDetail /></ProtectedRoute>} />
           <Route path="/wofbi" element={<ProtectedRoute><WofbiEntry /></ProtectedRoute>} />
+          <Route path="/discrepancies" element={<ProtectedRoute><DiscrepancyFlags /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
