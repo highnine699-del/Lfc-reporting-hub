@@ -5,6 +5,8 @@ import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import type { StationLevel } from '../types';
 
+import { collectDescendants } from '../utils/hierarchy';
+
 const LEVEL_LABELS: Record<StationLevel, string> = {
   community: 'Community',
   area: 'Area',
@@ -21,16 +23,6 @@ const SOURCE_LABELS: Record<string, string> = {
   excel_import: 'Excel Import',
   auto_compile: 'Auto',
 };
-
-function collectDescendants(
-  rootId: string,
-  allStations: Array<{ id: string; parent_station_id: string | null }>,
-  depth = 0,
-): string[] {
-  if (depth > 6) return [];
-  const children = allStations.filter(s => s.parent_station_id === rootId);
-  return children.flatMap(c => [c.id, ...collectDescendants(c.id, allStations, depth + 1)]);
-}
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const currentYear = new Date().getFullYear();

@@ -100,6 +100,16 @@ export default function BankReconciliation() {
     }
   };
 
+  const isManualMode = !ocrResult?.ocr_text || ocrResult?.confidence === 'manual';
+  const bankTotal: number | null =
+    !isManualMode && ocrResult?.total_candidates?.length > 0
+      ? ocrResult.total_candidates[0]
+      : null;
+  const difference =
+    bankTotal !== null && reportedTotal !== ''
+      ? Math.abs(Number(reportedTotal) - bankTotal)
+      : null;
+
   const handleConfirmTotal = async () => {
     if (!user?.station_id || !ocrResult || !bankStatementId) return;
     if (reportedTotal === '' || reportedTotal < 0) {
@@ -168,16 +178,6 @@ export default function BankReconciliation() {
     }
   };
 
-  const isManualMode = !ocrResult?.ocr_text || ocrResult?.confidence === 'manual';
-  const bankTotal: number | null =
-    !isManualMode && ocrResult?.total_candidates?.length > 0
-      ? ocrResult.total_candidates[0]
-      : null;
-  const difference =
-    bankTotal !== null && reportedTotal !== ''
-      ? Math.abs(Number(reportedTotal) - bankTotal)
-      : null;
-
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200">
@@ -241,8 +241,8 @@ export default function BankReconciliation() {
               {uploading
                 ? 'Uploading...'
                 : processing
-                ? 'Reading statement (OCR)...'
-                : 'Upload & Process'}
+                  ? 'Reading statement (OCR)...'
+                  : 'Upload & Process'}
             </button>
           </div>
         ) : (
@@ -287,11 +287,10 @@ export default function BankReconciliation() {
                       <button
                         key={index}
                         onClick={() => setReportedTotal(total)}
-                        className={`w-full text-left p-3 border rounded-lg transition-colors ${
-                          reportedTotal === total
-                            ? 'border-indigo-500 bg-indigo-50'
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
-                        }`}
+                        className={`w-full text-left p-3 border rounded-lg transition-colors ${reportedTotal === total
+                          ? 'border-indigo-500 bg-indigo-50'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                          }`}
                       >
                         <span className="text-base font-medium text-gray-900">
                           ₦{total.toLocaleString()}
@@ -345,13 +344,12 @@ export default function BankReconciliation() {
 
             {/* Reconciliation result (OCR mode only) */}
             {!isManualMode && bankTotal !== null && reportedTotal !== '' && difference !== null && (
-              <div className={`card p-6 border-2 ${
-                difference === 0
-                  ? 'border-green-500'
-                  : difference < 100
+              <div className={`card p-6 border-2 ${difference === 0
+                ? 'border-green-500'
+                : difference < 100
                   ? 'border-yellow-400'
                   : 'border-red-500'
-              }`}>
+                }`}>
                 <h2 className="text-base font-semibold text-gray-900 mb-4">Reconciliation Result</h2>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -364,25 +362,23 @@ export default function BankReconciliation() {
                   </div>
                   <div className="flex justify-between text-sm border-t pt-2 mt-2">
                     <span className="font-medium text-gray-900">Difference</span>
-                    <span className={`font-bold ${
-                      difference === 0
-                        ? 'text-green-600'
-                        : difference < 100
+                    <span className={`font-bold ${difference === 0
+                      ? 'text-green-600'
+                      : difference < 100
                         ? 'text-yellow-600'
                         : 'text-red-600'
-                    }`}>
+                      }`}>
                       ₦{difference.toLocaleString()}
                     </span>
                   </div>
                 </div>
 
-                <div className={`mt-4 p-3 rounded-lg ${
-                  difference === 0
-                    ? 'bg-green-50'
-                    : difference < 100
+                <div className={`mt-4 p-3 rounded-lg ${difference === 0
+                  ? 'bg-green-50'
+                  : difference < 100
                     ? 'bg-yellow-50'
                     : 'bg-red-50'
-                }`}>
+                  }`}>
                   {difference === 0 ? (
                     <>
                       <p className="text-sm font-medium text-green-800">✓ Perfect match</p>

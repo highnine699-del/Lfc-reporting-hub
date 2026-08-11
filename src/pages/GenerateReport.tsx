@@ -112,18 +112,7 @@ function compileStation(
   return result;
 }
 
-// ─────────────────────────────────────────────────────────────
-// Collect all descendants of a station (for supervisor view)
-// ─────────────────────────────────────────────────────────────
-function collectDescendants(
-  rootId: string,
-  allStations: Array<{ id: string; parent_station_id: string | null }>,
-  depth = 0,
-): string[] {
-  if (depth > 6) return [];
-  const children = allStations.filter(s => s.parent_station_id === rootId);
-  return children.flatMap(c => [c.id, ...collectDescendants(c.id, allStations, depth + 1)]);
-}
+import { collectDescendants } from '../utils/hierarchy';
 
 // ─────────────────────────────────────────────────────────────
 // Period helpers
@@ -288,7 +277,24 @@ export default function GenerateReport() {
     enabled: targetStationIds.length > 0,
   });
 
-  // ── fetch pastors for each station ───────────────────────
+  // ── fetch WOFBI entries for the period ───────────────────
+  const { data: wofbiData } = useQuery({
+    queryKey: ['wofbi-entries-period', targetStationIds, periodStart, periodEnd],
+    queryFn: async () => {
+      if (!targetStationIds.length) return [];
+      // WOFBI uses a monthly cycle; grab all months that overlap the period
+      const { data, error } = await supabase
+        .from('wofbi_entries')
+        .select('station_id, month, wofbi_class, attendance')
+        .in('station_id', targetStationIds)
+        .gte('month', periodStart)
+        .lte('month', periodEnd)
+        .is('deleted_at', null);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: targetStationIds.length > 0,
+  });
   const { data: pastors } = useQuery({
     queryKey: ['station-pastors', targetStationIds],
     queryFn: async () => {
@@ -320,6 +326,15 @@ export default function GenerateReport() {
       entriesByStation.get(e.station_id)!.push(e);
     });
 
+    // Build a WOFBI totals map: station_id → { bcc, lcc, ldc, total }
+    const wofbiByStation = new Map<string, Record<string, number>>();
+    (wofbiData ?? []).forEach((w: any) => {
+      if (!wofbiByStation.has(w.station_id)) wofbiByStation.set(w.station_id, { bcc: 0, lcc: 0, ldc: 0, total: 0 });
+      const entry = wofbiByStation.get(w.station_id)!;
+      entry[w.wofbi_class] = (entry[w.wofbi_class] ?? 0) + w.attendance;
+      entry.total += w.attendance;
+    });
+
     const rows = targetStationIds
       .map(sid => {
         const station = stationMap.get(sid);
@@ -327,6 +342,16 @@ export default function GenerateReport() {
         const entries = entriesByStation.get(sid) ?? [];
         const pastor = pastorMap.get(sid) ?? null;
         const compiled = compileStation(entries, templateVersion.cols, station, pastor);
+
+        // Inject WOFBI totals into compiled data so they appear in the Excel
+        const wofbi = wofbiByStation.get(sid);
+        if (wofbi) {
+          compiled['wofbi_bcc'] = wofbi.bcc;
+          compiled['wofbi_lcc'] = wofbi.lcc;
+          compiled['wofbi_ldc'] = wofbi.ldc;
+          compiled['wofbi_total'] = wofbi.total;
+        }
+
         return { station, pastor, compiled };
       })
       .filter(Boolean) as Array<{ station: StationRow; pastor: UserRow | null; compiled: Record<string, string | number> }>;
@@ -342,7 +367,7 @@ export default function GenerateReport() {
       buildPreview();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateVersion, entriesData, pastors, allStations, selectedTemplateId]);
+  }, [templateVersion, entriesData, pastors, wofbiData, allStations, selectedTemplateId]);
 
   // ── generate Excel ───────────────────────────────────────
   const handleGenerate = async () => {

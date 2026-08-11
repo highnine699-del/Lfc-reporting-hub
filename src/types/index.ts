@@ -142,6 +142,7 @@ export interface ServiceEntry {
   service_date: string; // ISO date string YYYY-MM-DD
   template_version_id: string | null;
   data: Record<string, any>;
+  notes: string | null;
   entered_by: string;
   source: ReportSource;
   created_at: string;

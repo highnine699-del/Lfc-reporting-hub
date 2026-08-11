@@ -53,6 +53,7 @@ export default function NewReport() {
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
+  const [notes, setNotes] = useState('');
 
   // ── whatsapp / voice ────────────────────────────────────
   const [rawText, setRawText] = useState('');
@@ -69,25 +70,50 @@ export default function NewReport() {
   const [excelImporting, setExcelImporting] = useState(false);
   const [importDone, setImportDone] = useState(false);
 
-  // ── fetch active template columns (non-static only) ─────
+  // ── fetch active template columns — filtered by station category ─────
   const { data: templateInfo } = useQuery({
     queryKey: ['active-template-columns', user?.station_id],
     queryFn: async () => {
-      // Get the most recently published template_version
-      const { data: version, error: vErr } = await supabase
+      if (!user?.station_id) return null;
+
+      // Get this station's category so we can pick the right template
+      const { data: station } = await supabase
+        .from('stations')
+        .select('category')
+        .eq('id', user.station_id)
+        .single();
+
+      const category = station?.category ?? null;
+
+      // Find the most recent template version whose template name matches
+      // the station's category. Fall back to the globally latest version.
+      let versionQuery = supabase
         .from('template_versions')
-        .select('id, template_id, templates(name, period_type)')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .select('id, template_id, templates(name, period_type, id)')
+        .order('created_at', { ascending: false });
+
+      const { data: allVersions, error: vErr } = await versionQuery;
       if (vErr) throw vErr;
+      if (!allVersions?.length) return null;
+
+      // Prefer a version whose template name contains the station's category keyword
+      let version = null;
+      if (category) {
+        const catKeyword = category.toLowerCase(); // 'mainline' | 'cotm' | 'cpm'
+        version = allVersions.find((v: any) => {
+          const name = (v.templates as any)?.name?.toLowerCase() ?? '';
+          return name.includes(catKeyword);
+        });
+      }
+      // Fallback: just use the most recently published version
+      if (!version) version = allVersions[0];
       if (!version) return null;
 
       const { data: cols, error: cErr } = await supabase
         .from('template_columns')
         .select('id, field_key, display_label, aggregation_type, is_static, col_index')
         .eq('template_version_id', version.id)
-        .eq('is_static', false)  // static cols come from station profile, not service entry
+        .eq('is_static', false)
         .order('col_index');
       if (cErr) throw cErr;
 
@@ -292,6 +318,7 @@ export default function NewReport() {
         service_date: serviceDate,
         template_version_id: templateInfo?.version?.id ?? null,
         data: formData,
+        notes: notes.trim() || null,
         entered_by: user.id,
         source: inputMethod === 'whatsapp' ? 'whatsapp_text'
           : inputMethod === 'voice' ? 'voice'
@@ -592,6 +619,18 @@ export default function NewReport() {
                 />
               </div>
             )}
+
+            {/* Notes */}
+            <div className="card p-5">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">Notes <span style={{ color: '#6B7280', fontWeight: 400 }}>(optional)</span></label>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                rows={3}
+                className="input"
+                placeholder="Any remarks about this service — guest minister, special event, etc."
+              />
+            </div>
 
             {/* Save */}
             <div className="flex gap-3">

@@ -11,21 +11,44 @@ const PASTOR_STEPS: Step[] = ['role', 'personal', 'station', 'facility', 'wofbi'
 function StepIndicator({ current, steps }: { current: Step; steps: Step[] }) {
   const idx = steps.indexOf(current);
   return (
-    <div className="flex items-center gap-2 mb-8">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 32 }}>
       {PASTOR_STEPS.filter(s => steps.includes(s)).map((s, i) => (
-        <div key={s} className="flex items-center gap-2">
-          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold
-            ${i < idx ? 'bg-indigo-600 text-white' : i === idx ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-400' : 'bg-gray-100 text-gray-400'}`}>
+        <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 11, fontWeight: 700, flexShrink: 0,
+            background: i < idx ? '#4F46E5' : i === idx ? 'rgba(79,70,229,0.15)' : 'rgba(255,255,255,0.06)',
+            color: i < idx ? '#fff' : i === idx ? '#A5B4FC' : '#6B7280',
+            border: i === idx ? '2px solid rgba(79,70,229,0.5)' : '2px solid transparent',
+            transition: 'all 0.2s',
+          }}>
             {i < idx ? '✓' : i + 1}
           </div>
           {i < PASTOR_STEPS.filter(s2 => steps.includes(s2)).length - 1 && (
-            <div className={`h-0.5 w-8 ${i < idx ? 'bg-indigo-400' : 'bg-gray-200'}`} />
+            <div style={{
+              height: 2, width: 28, flexShrink: 0,
+              background: i < idx ? '#4F46E5' : 'rgba(255,255,255,0.08)',
+              borderRadius: 2, transition: 'background 0.2s',
+            }} />
           )}
         </div>
       ))}
     </div>
   );
 }
+
+// ── Shared inline styles for Onboarding form fields ─────────
+const OL: React.CSSProperties = {
+  display: 'block', color: '#9CA3AF', fontSize: 11, fontWeight: 600,
+  textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6,
+};
+const OI: React.CSSProperties = {
+  width: '100%', height: 44, borderRadius: 10, padding: '0 12px',
+  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.11)',
+  color: '#F5F7FA', fontSize: 15, fontFamily: 'inherit', outline: 'none',
+  boxSizing: 'border-box',
+};
 
 export default function Onboarding() {
   const { authUser } = useAuth();
@@ -221,12 +244,14 @@ export default function Onboarding() {
   const isLastStep = activeSteps.indexOf(step) === activeSteps.length - 1;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-      <div className="w-full max-w-lg">
-        <div className="card p-8">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">Complete Your Profile</h1>
-            <p className="text-sm text-gray-500 mt-1">LFC Reporting Hub setup</p>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080A0F', padding: '24px 16px' }}>
+      <div style={{ width: '100%', maxWidth: 520 }}>
+        <div style={{ background: 'rgba(18,21,28,0.85)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 20, padding: '32px 28px', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
+
+          {/* Logo / Title */}
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <h1 style={{ color: '#F5F7FA', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em' }}>Complete Your Profile</h1>
+            <p style={{ color: '#6B7280', fontSize: 13, marginTop: 4 }}>LFC Reporting Hub setup</p>
           </div>
 
           {step !== 'saving' && (
@@ -234,47 +259,41 @@ export default function Onboarding() {
           )}
 
           {errorMsg && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+            <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#FCA5A5', fontSize: 13 }}>
               {errorMsg}
             </div>
           )}
 
           {/* ── STEP: role ─────────────────────────────── */}
           {step === 'role' && (
-            <div className="space-y-6">
-              <h2 className="text-base font-semibold text-gray-900">Are you a pastor or a delegate?</h2>
-              <div className="grid grid-cols-2 gap-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <h2 style={{ color: '#F5F7FA', fontSize: 15, fontWeight: 600 }}>Are you a pastor or a delegate?</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 {[
                   { val: false, label: 'Pastor', desc: 'Setting up a new station' },
                   { val: true, label: 'Delegate', desc: 'Joining an existing station' },
                 ].map(({ val, label, desc }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setIsDelegate(val)}
-                    className={`card p-4 text-left transition-colors ${isDelegate === val
-                      ? 'border-indigo-500 ring-2 ring-indigo-500 bg-indigo-50'
-                      : 'hover:bg-gray-50'}`}
-                  >
-                    <p className="text-sm font-semibold text-gray-900">{label}</p>
-                    <p className="text-xs text-gray-500 mt-1">{desc}</p>
+                  <button key={label} type="button" onClick={() => setIsDelegate(val)}
+                    style={{
+                      padding: '14px 16px', borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                      background: isDelegate === val ? 'rgba(79,70,229,0.15)' : 'rgba(255,255,255,0.04)',
+                      border: isDelegate === val ? '1px solid rgba(79,70,229,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                      transition: 'all 0.15s',
+                    }}>
+                    <p style={{ color: '#F5F7FA', fontSize: 14, fontWeight: 600 }}>{label}</p>
+                    <p style={{ color: '#6B7280', fontSize: 12, marginTop: 3 }}>{desc}</p>
                   </button>
                 ))}
               </div>
-
               {isDelegate && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label style={{ display: 'block', color: '#9CA3AF', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                     6-digit pairing code from your pastor
                   </label>
-                  <input
-                    type="text"
-                    value={pairingCode}
+                  <input type="text" value={pairingCode}
                     onChange={e => setPairingCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="000000"
-                    className="input text-center text-2xl tracking-widest font-mono"
-                    maxLength={6}
-                  />
+                    placeholder="000000" maxLength={6}
+                    style={{ width: '100%', height: 52, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.11)', color: '#F5F7FA', fontSize: 28, fontFamily: 'monospace', fontWeight: 700, textAlign: 'center', letterSpacing: '0.3em', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               )}
             </div>
@@ -282,78 +301,40 @@ export default function Onboarding() {
 
           {/* ── STEP: personal ─────────────────────────── */}
           {step === 'personal' && (
-            <div className="space-y-4">
-              <h2 className="text-base font-semibold text-gray-900">Your details</h2>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                <input type="text" value={fullName} onChange={e => setFullName(e.target.value)}
-                  className="input" placeholder="e.g. Pastor John Doe" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input type="tel" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)}
-                  className="input" placeholder="e.g. 08012345678" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Staff ID</label>
-                  <input type="text" value={staffId} onChange={e => setStaffId(e.target.value)}
-                    className="input" placeholder="Optional" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <h2 style={{ color: '#F5F7FA', fontSize: 15, fontWeight: 600 }}>Your details</h2>
+              {[
+                { lbl: 'Full Name *', val: fullName, set: setFullName, type: 'text', ph: 'e.g. Pastor John Doe' },
+                { lbl: 'Phone Number', val: phoneNumber, set: setPhoneNumber, type: 'tel', ph: '08012345678' },
+              ].map(({ lbl, val, set, type, ph }) => (
+                <div key={lbl}>
+                  <label style={OL}>{lbl}</label>
+                  <input type={type} value={val} onChange={e => set(e.target.value)} placeholder={ph} style={OI} />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Year of Entry (YOE)
-                    <span className="ml-1 text-xs font-normal text-gray-400">e.g. 11/01/2012</span>
-                  </label>
-                  <input type="text" value={yoe} onChange={e => setYoe(e.target.value)}
-                    className="input" placeholder="DD/MM/YYYY" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date of Resumption (DOR)
-                    <span className="ml-1 text-xs font-normal text-gray-400">e.g. 21/09/2025</span>
-                  </label>
-                  <input type="text" value={dor} onChange={e => setDor(e.target.value)}
-                    className="input" placeholder="DD/MM/YYYY" />
-                </div>
+              ))}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div><label style={OL}>Staff ID</label><input type="text" value={staffId} onChange={e => setStaffId(e.target.value)} placeholder="Optional" style={OI} /></div>
+                <div />
+                <div><label style={OL}>Year of Entry (YOE)</label><input type="text" value={yoe} onChange={e => setYoe(e.target.value)} placeholder="DD/MM/YYYY" style={OI} /></div>
+                <div><label style={OL}>Date of Resumption (DOR)</label><input type="text" value={dor} onChange={e => setDor(e.target.value)} placeholder="DD/MM/YYYY" style={OI} /></div>
               </div>
             </div>
           )}
 
           {/* ── STEP: station ──────────────────────────── */}
           {step === 'station' && (
-            <div className="space-y-4">
-              <h2 className="text-base font-semibold text-gray-900">Station details</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <h2 style={{ color: '#F5F7FA', fontSize: 15, fontWeight: 600 }}>Station details</h2>
+              <div><label style={OL}>Station Name *</label><input type="text" value={stationName} onChange={e => setStationName(e.target.value)} placeholder="e.g. Piwoyi" style={OI} /></div>
+              <div><label style={OL}>State *</label><input type="text" value={stateName} onChange={e => setStateName(e.target.value)} placeholder="e.g. FCT" style={OI} /></div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Station Name *</label>
-                <input type="text" value={stationName} onChange={e => setStationName(e.target.value)}
-                  className="input" placeholder="e.g. Piwoyi" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
-                <input type="text" value={stateName} onChange={e => setStateName(e.target.value)}
-                  className="input" placeholder="e.g. FCT" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Station Category *</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {([
-                    { val: 'mainline', label: 'Mainline', desc: 'Established church' },
-                    { val: 'cotm', label: 'COTM', desc: '5,000 churches' },
-                    { val: 'cpm', label: 'CPM', desc: '10,000 churches' },
-                  ] as const).map(({ val, label, desc }) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setCategory(val)}
-                      className={`card p-3 text-left transition-colors ${category === val
-                        ? 'border-indigo-500 ring-2 ring-indigo-500 bg-indigo-50'
-                        : 'hover:bg-gray-50'}`}
-                    >
-                      <p className="text-sm font-semibold text-gray-900">{label}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                <label style={OL}>Station Category *</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                  {([{ val: 'mainline', label: 'Mainline', desc: 'Established' }, { val: 'cotm', label: 'COTM', desc: '5,000 prog.' }, { val: 'cpm', label: 'CPM', desc: '10,000 prog.' }] as const).map(({ val, label, desc }) => (
+                    <button key={val} type="button" onClick={() => setCategory(val)}
+                      style={{ padding: '10px 8px', borderRadius: 10, textAlign: 'left', cursor: 'pointer', background: category === val ? 'rgba(79,70,229,0.15)' : 'rgba(255,255,255,0.04)', border: category === val ? '1px solid rgba(79,70,229,0.5)' : '1px solid rgba(255,255,255,0.1)', transition: 'all 0.15s' }}>
+                      <p style={{ color: '#F5F7FA', fontSize: 13, fontWeight: 600 }}>{label}</p>
+                      <p style={{ color: '#6B7280', fontSize: 11, marginTop: 2 }}>{desc}</p>
                     </button>
                   ))}
                 </div>
@@ -363,32 +344,24 @@ export default function Onboarding() {
 
           {/* ── STEP: facility ─────────────────────────── */}
           {step === 'facility' && (
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Facility details</h2>
-                <p className="text-sm text-gray-500 mt-1">These are fixed details about your church building. You can update them later in Settings.</p>
+                <h2 style={{ color: '#F5F7FA', fontSize: 15, fontWeight: 600 }}>Facility details</h2>
+                <p style={{ color: '#6B7280', fontSize: 13, marginTop: 4 }}>Fixed details about your church building. Update later in Settings.</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Facility Type</label>
-                <input type="text" value={facilityType} onChange={e => setFacilityType(e.target.value)}
-                  className="input" placeholder="e.g. TEMPORARY, PERMANENT, RENTED" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div><label style={OL}>Facility Type</label><input type="text" value={facilityType} onChange={e => setFacilityType(e.target.value)} placeholder="e.g. TEMPORARY, PERMANENT, RENTED" style={OI} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {[
-                  { label: 'Main Hall Capacity', val: mainHallCap, set: setMainHallCap },
-                  { label: 'Main Hall Chairs', val: mainHallChairs, set: setMainHallChairs },
-                  { label: 'Overflow Capacity', val: overflowCap, set: setOverflowCap },
-                  { label: 'Overflow Chairs', val: overflowChairs, set: setOverflowChairs },
-                  { label: 'Youth Hall Capacity', val: youthHallCap, set: setYouthHallCap },
-                  { label: 'Youth Hall Chairs', val: youthHallChairs, set: setYouthHallChairs },
-                  { label: 'Children Capacity', val: childrenHallCap, set: setChildrenHallCap },
-                  { label: 'Children Chairs', val: childrenHallChairs, set: setChildrenHallChairs },
-                ].map(({ label, val, set }) => (
-                  <div key={label}>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">{label}</label>
-                    <input type="number" min="0" value={val} onChange={e => set(e.target.value)}
-                      className="input" placeholder="0" />
-                  </div>
+                  { l: 'Main Hall Capacity', v: mainHallCap, s: setMainHallCap },
+                  { l: 'Main Hall Chairs', v: mainHallChairs, s: setMainHallChairs },
+                  { l: 'Overflow Capacity', v: overflowCap, s: setOverflowCap },
+                  { l: 'Overflow Chairs', v: overflowChairs, s: setOverflowChairs },
+                  { l: 'Youth Hall Capacity', v: youthHallCap, s: setYouthHallCap },
+                  { l: 'Youth Hall Chairs', v: youthHallChairs, s: setYouthHallChairs },
+                  { l: 'Children Capacity', v: childrenHallCap, s: setChildrenHallCap },
+                  { l: 'Children Chairs', v: childrenHallChairs, s: setChildrenHallChairs },
+                ].map(({ l, v, s }) => (
+                  <div key={l}><label style={OL}>{l}</label><input type="number" min="0" value={v} onChange={e => s(e.target.value)} placeholder="0" style={OI} /></div>
                 ))}
               </div>
             </div>
@@ -396,28 +369,17 @@ export default function Onboarding() {
 
           {/* ── STEP: wofbi ────────────────────────────── */}
           {step === 'wofbi' && (
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">WOFBI (Bible School)</h2>
-                <p className="text-sm text-gray-500 mt-1">Does your station run a Word of Faith Bible Institute class?</p>
+                <h2 style={{ color: '#F5F7FA', fontSize: 15, fontWeight: 600 }}>WOFBI (Bible School)</h2>
+                <p style={{ color: '#6B7280', fontSize: 13, marginTop: 4 }}>Does your station run a Word of Faith Bible Institute class?</p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                {([
-                  { val: 'none', label: 'None', desc: 'No WOFBI class' },
-                  { val: 'bcc', label: 'BCC', desc: 'Basic Christian Course' },
-                  { val: 'lcc', label: 'LCC', desc: 'Leadership Christian Course' },
-                  { val: 'ldc', label: 'LDC', desc: 'Leadership Development Course' },
-                ] as const).map(({ val, label, desc }) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => setWofbiClass(val)}
-                    className={`card p-3 text-left transition-colors ${wofbiClass === val
-                      ? 'border-indigo-500 ring-2 ring-indigo-500 bg-indigo-50'
-                      : 'hover:bg-gray-50'}`}
-                  >
-                    <p className="text-sm font-semibold text-gray-900">{label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {([{ val: 'none', label: 'None', desc: 'No WOFBI class' }, { val: 'bcc', label: 'BCC', desc: 'Basic Christian Course' }, { val: 'lcc', label: 'LCC', desc: 'Leadership Christian Course' }, { val: 'ldc', label: 'LDC', desc: 'Leadership Dev. Course' }] as const).map(({ val, label, desc }) => (
+                  <button key={val} type="button" onClick={() => setWofbiClass(val)}
+                    style={{ padding: '12px 14px', borderRadius: 10, textAlign: 'left', cursor: 'pointer', background: wofbiClass === val ? 'rgba(79,70,229,0.15)' : 'rgba(255,255,255,0.04)', border: wofbiClass === val ? '1px solid rgba(79,70,229,0.5)' : '1px solid rgba(255,255,255,0.1)', transition: 'all 0.15s' }}>
+                    <p style={{ color: '#F5F7FA', fontSize: 14, fontWeight: 600 }}>{label}</p>
+                    <p style={{ color: '#6B7280', fontSize: 12, marginTop: 3 }}>{desc}</p>
                   </button>
                 ))}
               </div>
@@ -426,30 +388,29 @@ export default function Onboarding() {
 
           {/* ── STEP: saving ───────────────────────────── */}
           {step === 'saving' && (
-            <div className="py-8 text-center">
-              <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-sm text-gray-600">Setting up your account…</p>
+            <div style={{ padding: '40px 0', textAlign: 'center' }}>
+              <div style={{ width: 36, height: 36, border: '3px solid rgba(79,70,229,0.2)', borderTopColor: '#4F46E5', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+              <p style={{ color: '#9CA3AF', fontSize: 14 }}>Setting up your account…</p>
             </div>
           )}
 
           {/* ── Navigation buttons ──────────────────────── */}
           {step !== 'saving' && (
-            <div className="flex gap-3 mt-8">
+            <div style={{ display: 'flex', gap: 10, marginTop: 28 }}>
               {activeSteps.indexOf(step) > 0 && (
-                <button type="button" onClick={back} className="btn btn-secondary flex-1">
+                <button type="button" onClick={back}
+                  style={{ flex: 1, height: 46, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.11)', color: '#9CA3AF', fontSize: 15, fontWeight: 500, cursor: 'pointer' }}>
                   Back
                 </button>
               )}
-              <button
-                type="button"
-                onClick={next}
-                disabled={!canProceed() || loading}
-                className="btn btn-primary flex-1"
-              >
+              <button type="button" onClick={next} disabled={!canProceed() || loading}
+                style={{ flex: 1, height: 46, borderRadius: 12, background: (!canProceed() || loading) ? 'rgba(79,70,229,0.4)' : '#4F46E5', border: 'none', color: '#fff', fontSize: 15, fontWeight: 600, cursor: (!canProceed() || loading) ? 'not-allowed' : 'pointer', transition: 'all 0.15s' }}>
                 {loading ? 'Saving…' : isLastStep ? 'Complete Setup' : 'Continue'}
               </button>
             </div>
           )}
+
         </div>
       </div>
     </div>

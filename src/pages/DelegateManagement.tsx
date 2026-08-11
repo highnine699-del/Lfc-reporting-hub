@@ -60,10 +60,12 @@ export default function DelegateManagement() {
 
   const unlinkMutation = useMutation({
     mutationFn: async (delegateId: string) => {
-      // Unlink by clearing linked_pastor_id; we don't delete the account
+      // Properly detach: clear both linked_pastor_id AND station_id
+      // so the delegate no longer appears in any station's queries.
+      // We don't delete the account — they can re-link with a new code.
       const { error } = await supabase
         .from('users')
-        .update({ linked_pastor_id: null, station_id: user!.station_id })
+        .update({ linked_pastor_id: null, station_id: null })
         .eq('id', delegateId)
         .eq('linked_pastor_id', user!.id);
       if (error) throw error;

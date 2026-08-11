@@ -47,6 +47,7 @@ export default function ServiceEntryDetail() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [editNotes, setEditNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -106,7 +107,7 @@ export default function ServiceEntryDetail() {
       if (!id || !user) throw new Error('Not authenticated');
       const { error } = await supabase
         .from('service_entries')
-        .update({ data: newData, entered_by: user.id })
+        .update({ data: newData, notes: editNotes.trim() || null, entered_by: user.id })
         .eq('id', id);
       if (error) throw error;
     },
@@ -144,6 +145,7 @@ export default function ServiceEntryDetail() {
 
   const startEdit = () => {
     setFormData({ ...(entry?.data ?? {}) });
+    setEditNotes(entry?.data?.notes ?? '');
     setIsEditing(true);
     setErrorMsg(null);
   };

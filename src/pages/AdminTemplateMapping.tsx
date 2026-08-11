@@ -345,7 +345,43 @@ export default function AdminTemplateMapping() {
     }
   };
 
-  // Role guard
+  // ── delete template ──────────────────────────────────────
+  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    setDeletingTemplateId(templateId);
+    try {
+      // Delete associated template_columns first (CASCADE should handle it, but be explicit)
+      const { data: versions } = await supabase
+        .from('template_versions')
+        .select('id')
+        .eq('template_id', templateId);
+
+      if (versions?.length) {
+        await supabase
+          .from('template_columns')
+          .delete()
+          .in('template_version_id', versions.map((v: any) => v.id));
+        await supabase
+          .from('template_versions')
+          .delete()
+          .eq('template_id', templateId);
+      }
+
+      const { error } = await supabase.from('templates').delete().eq('id', templateId);
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      if (selectedTemplateId === templateId) setSelectedTemplateId('');
+      setConfirmDeleteId(null);
+      setSuccessMsg('Template deleted.');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to delete template.');
+    } finally {
+      setDeletingTemplateId(null);
+    }
+  };
   if (!user) return null;
   if (user.role !== 'admin') {
     return (
@@ -360,363 +396,407 @@ export default function AdminTemplateMapping() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button onClick={() => navigate('/dashboard')} className="btn btn-ghost text-sm">← Back to Dashboard</button>
-        </div>
-      </header>
-
-      <main className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Template Mapping</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Upload a reporting Excel template. The app will read its column headers, guess how each
-            column should be aggregated, and let you edit before publishing.
-          </p>
-        </div>
-
-        {errorMsg && (
-          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex justify-between">
-            <span>{errorMsg}</span>
-            <button onClick={() => setErrorMsg(null)} className="ml-3 text-red-400">✕</button>
+    <>
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b border-gray-200">
+          <div className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <button onClick={() => navigate('/dashboard')} className="btn btn-ghost text-sm">← Back to Dashboard</button>
           </div>
-        )}
-        {successMsg && (
-          <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700 flex justify-between">
-            <span>{successMsg}</span>
-            <button onClick={() => setSuccessMsg(null)} className="ml-3 text-green-400">✕</button>
+        </header>
+
+        <main className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Template Mapping</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Upload a reporting Excel template. The app will read its column headers, guess how each
+              column should be aggregated, and let you edit before publishing.
+            </p>
           </div>
-        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {errorMsg && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex justify-between">
+              <span>{errorMsg}</span>
+              <button onClick={() => setErrorMsg(null)} className="ml-3 text-red-400">✕</button>
+            </div>
+          )}
+          {successMsg && (
+            <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700 flex justify-between">
+              <span>{successMsg}</span>
+              <button onClick={() => setSuccessMsg(null)} className="ml-3 text-green-400">✕</button>
+            </div>
+          )}
 
-          {/* ── Left panel ──────────────────────────── */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {/* ── Template selector — card list ────────── */}
-            <div className="card p-5">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-gray-900">Template</h2>
-                <button
-                  onClick={() => setShowCreateForm(v => !v)}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                >
-                  {showCreateForm ? '← Back' : '+ New template'}
-                </button>
-              </div>
+            {/* ── Left panel ──────────────────────────── */}
+            <div className="lg:col-span-1 space-y-4">
 
-              {showCreateForm ? (
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={newTemplateName}
-                    onChange={e => setNewTemplateName(e.target.value)}
-                    className="input text-sm"
-                    placeholder="Template name, e.g. Monthly Report"
-                    autoFocus
-                  />
-                  <select
-                    value={newTemplatePeriod}
-                    onChange={e => setNewTemplatePeriod(e.target.value)}
-                    className="input text-sm"
-                  >
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="quarterly">Quarterly</option>
-                    <option value="half_year">Half-Yearly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
+              {/* ── Template selector — card list ────────── */}
+              <div className="card p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-gray-900">Template</h2>
                   <button
-                    onClick={handleCreateTemplate}
-                    disabled={!newTemplateName.trim() || creatingTemplate}
-                    className="btn btn-primary w-full text-sm"
+                    onClick={() => setShowCreateForm(v => !v)}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
                   >
-                    {creatingTemplate ? 'Creating…' : 'Create Template'}
+                    {showCreateForm ? '← Back' : '+ New template'}
                   </button>
                 </div>
-              ) : (
-                <>
-                  {templatesLoading ? (
-                    <p className="text-sm text-gray-400">Loading…</p>
-                  ) : !templates?.length ? (
-                    <p className="text-sm text-gray-400">
-                      No templates yet. Click <span className="font-medium text-indigo-600">+ New template</span> above to create one.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {templates.map((t: any) => {
-                        const ver = activeVersions?.find((v: any) => v.template_id === t.id);
-                        const isSelected = selectedTemplateId === t.id;
-                        return (
-                          <button
-                            key={t.id}
-                            onClick={() => setSelectedTemplateId(t.id)}
-                            className={`w-full text-left p-3 rounded-lg border transition-colors ${isSelected
-                              ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-400'
-                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <p className={`text-sm font-medium truncate ${isSelected ? 'text-indigo-900' : 'text-gray-900'}`}>
-                                  {t.name}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-0.5 capitalize">
-                                  {t.period_type.replace('_', '-')}
-                                </p>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                {ver ? (
-                                  <span className="text-xs text-green-600 font-medium">v{ver.version_number} · {ver.col_count} cols</span>
-                                ) : (
-                                  <span className="text-xs text-yellow-600">No version</span>
-                                )}
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <p className="text-xs text-indigo-600 mt-1.5 font-medium">✓ Selected — upload a new Excel file below to update</p>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
 
-            {/* Upload file */}
-            <div className="card p-5">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">Upload Excel Template</h2>
-              <p className="text-xs text-gray-500 mb-3">
-                The app will scan the file, detect column headers and automatically guess how each
-                should be aggregated.
-              </p>
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500
+                {showCreateForm ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={newTemplateName}
+                      onChange={e => setNewTemplateName(e.target.value)}
+                      className="input text-sm"
+                      placeholder="Template name, e.g. Monthly Report"
+                      autoFocus
+                    />
+                    <select
+                      value={newTemplatePeriod}
+                      onChange={e => setNewTemplatePeriod(e.target.value)}
+                      className="input text-sm"
+                    >
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="half_year">Half-Yearly</option>
+                      <option value="yearly">Yearly</option>
+                    </select>
+                    <button
+                      onClick={handleCreateTemplate}
+                      disabled={!newTemplateName.trim() || creatingTemplate}
+                      className="btn btn-primary w-full text-sm"
+                    >
+                      {creatingTemplate ? 'Creating…' : 'Create Template'}
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {templatesLoading ? (
+                      <p className="text-sm text-gray-400">Loading…</p>
+                    ) : !templates?.length ? (
+                      <p className="text-sm text-gray-400">
+                        No templates yet. Click <span className="font-medium text-indigo-600">+ New template</span> above to create one.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {templates.map((t: any) => {
+                          const ver = activeVersions?.find((v: any) => v.template_id === t.id);
+                          const isSelected = selectedTemplateId === t.id;
+                          return (
+                            <div key={t.id} style={{ position: 'relative' }}>
+                              <button
+                                onClick={() => setSelectedTemplateId(t.id)}
+                                className={`w-full text-left p-3 rounded-lg border transition-colors ${isSelected
+                                  ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-400'
+                                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                              >
+                                <div className="flex items-start justify-between gap-2 pr-6">
+                                  <div className="min-w-0">
+                                    <p className={`text-sm font-medium truncate ${isSelected ? 'text-indigo-900' : 'text-gray-900'}`}>
+                                      {t.name}
+                                    </p>
+                                    <p className="text-xs text-gray-400 mt-0.5 capitalize">
+                                      {t.period_type.replace('_', '-')}
+                                    </p>
+                                  </div>
+                                  <div className="text-right flex-shrink-0">
+                                    {ver ? (
+                                      <span className="text-xs text-green-600 font-medium">v{ver.version_number} · {ver.col_count} cols</span>
+                                    ) : (
+                                      <span className="text-xs text-yellow-600">No version</span>
+                                    )}
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <p className="text-xs text-indigo-600 mt-1.5 font-medium">✓ Selected — upload a new Excel file below to update</p>
+                                )}
+                              </button>
+                              {/* Delete button */}
+                              <button
+                                onClick={e => { e.stopPropagation(); setConfirmDeleteId(t.id); }}
+                                title="Delete template"
+                                style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', padding: 4, borderRadius: 6, lineHeight: 1 }}
+                                onMouseEnter={e => (e.currentTarget.style.color = '#FCA5A5')}
+                                onMouseLeave={e => (e.currentTarget.style.color = '#6B7280')}
+                              >
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Upload file */}
+              <div className="card p-5">
+                <h2 className="text-sm font-semibold text-gray-900 mb-3">Upload Excel Template</h2>
+                <p className="text-xs text-gray-500 mb-3">
+                  The app will scan the file, detect column headers and automatically guess how each
+                  should be aggregated.
+                </p>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-gray-500
                   file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0
                   file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700
                   hover:file:bg-indigo-100"
-              />
-              {uploadedFile && (
-                <p className="mt-2 text-xs text-gray-500">📄 {uploadedFile.name}</p>
-              )}
-              {scanning && (
-                <p className="mt-2 text-xs text-indigo-500">Scanning columns…</p>
-              )}
-            </div>
-
-            {/* Sheet selector */}
-            {availableSheets.length > 1 && (
-              <div className="card p-5">
-                <h2 className="text-sm font-semibold text-gray-900 mb-3">Sheet</h2>
-                <p className="text-xs text-gray-500 mb-2">
-                  This template has multiple sheets. Pick the one containing the data columns.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {availableSheets.map(s => (
-                    <button
-                      key={s}
-                      onClick={() => handleSheetChange(s)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${activeSheet === s
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs text-gray-400">
-                  You can repeat this for each sheet — publish once per sheet or combine into one template.
-                </p>
-              </div>
-            )}
-
-            {/* Publish */}
-            {showPublishConfirm ? (
-              <div className="card p-4 border-orange-200 bg-orange-50 space-y-3">
-                <p className="text-sm font-medium text-orange-900">Publish this version?</p>
-                {(() => {
-                  const tpl = templates?.find((t: any) => t.id === selectedTemplateId);
-                  const ver = activeVersions?.find((v: any) => v.template_id === selectedTemplateId);
-                  return (
-                    <p className="text-xs text-orange-700">
-                      This will create a new version for <span className="font-semibold">{tpl?.name ?? 'the selected template'}</span>
-                      {ver ? ` (currently v${ver.version_number} with ${ver.col_count} columns)` : ''} and replace it with <span className="font-semibold">{columns.length} columns</span> from <span className="font-semibold">{uploadedFile?.name}</span>.
-                      Existing service entries are not affected.
-                    </p>
-                  );
-                })()}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => { setShowPublishConfirm(false); publishMutation.mutate(); }}
-                    disabled={publishMutation.isPending}
-                    className="btn btn-primary flex-1 text-sm"
-                  >
-                    {publishMutation.isPending ? 'Publishing…' : 'Yes, publish'}
-                  </button>
-                  <button
-                    onClick={() => setShowPublishConfirm(false)}
-                    className="btn btn-ghost flex-1 text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowPublishConfirm(true)}
-                disabled={!selectedTemplateId || !uploadedFile || columns.length === 0 || publishMutation.isPending}
-                className="btn btn-primary w-full"
-              >
-                Publish Template
-              </button>
-            )}
-          </div>
-
-          {/* ── Right panel — column editor ──────────── */}
-          <div className="lg:col-span-2">
-            <div className="card p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-gray-900">
-                  Detected Columns
-                  {columns.length > 0 && (
-                    <span className="ml-2 text-xs font-normal text-gray-400">({columns.length} columns from "{activeSheet}")</span>
-                  )}
-                </h2>
+                />
+                {uploadedFile && (
+                  <p className="mt-2 text-xs text-gray-500">📄 {uploadedFile.name}</p>
+                )}
+                {scanning && (
+                  <p className="mt-2 text-xs text-indigo-500">Scanning columns…</p>
+                )}
               </div>
 
-              {columns.length === 0 ? (
-                <div className="py-12 text-center">
-                  <p className="text-sm text-gray-400">
-                    {uploadedFile ? 'No headers detected. Try a different sheet.' : 'Upload an Excel file to see its columns here.'}
+              {/* Sheet selector */}
+              {availableSheets.length > 1 && (
+                <div className="card p-5">
+                  <h2 className="text-sm font-semibold text-gray-900 mb-3">Sheet</h2>
+                  <p className="text-xs text-gray-500 mb-2">
+                    This template has multiple sheets. Pick the one containing the data columns.
                   </p>
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-                  {/* Legend */}
-                  <div className="flex flex-wrap gap-3 text-xs text-gray-500 pb-2 border-b border-gray-100">
-                    {AGG_OPTIONS.map(o => (
-                      <span key={o.value}>
-                        <span className="font-medium text-gray-700">{o.label}</span> — {o.desc}
-                      </span>
+                  <div className="flex flex-wrap gap-2">
+                    {availableSheets.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => handleSheetChange(s)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${activeSheet === s
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                      >
+                        {s}
+                      </button>
                     ))}
                   </div>
-
-                  {columns.map((col, idx) => (
-                    <div key={idx} style={{
-                      border: `1px solid rgba(255,255,255,0.11)`,
-                      borderRadius: 10,
-                      padding: 12,
-                      background: 'rgba(255,255,255,0.03)',
-                    }}>
-                      <div className="flex items-start gap-3">
-                        {/* Column index badge */}
-                        <div className="w-7 h-7 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500 font-mono flex-shrink-0 mt-0.5">
-                          {col.col_index + 1}
-                        </div>
-
-                        <div className="flex-1 space-y-2 min-w-0">
-                          {/* Header text (read-only) + display label (editable) */}
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <p className="text-xs text-gray-400 mb-0.5">Excel header</p>
-                              <p className="text-xs font-mono text-gray-700 truncate" title={col.header_text}>
-                                {col.header_text}
-                              </p>
-                            </div>
-                            <div>
-                              <label className="text-xs text-gray-500 mb-0.5 block">Display label</label>
-                              <input
-                                type="text"
-                                value={col.display_label}
-                                onChange={e => updateColumn(idx, { display_label: e.target.value })}
-                                className="input"
-                                style={{ fontSize: 14, height: 36, padding: '0 8px' }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* field_key */}
-                          <div>
-                            <label className="text-xs text-gray-500 mb-0.5 block">Field key (used in service entry form)</label>
-                            <input
-                              type="text"
-                              value={col.field_key}
-                              onChange={e => updateColumn(idx, { field_key: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
-                              className="input"
-                              style={{ fontSize: 14, height: 36, padding: '0 8px', fontFamily: 'monospace' }}
-                            />
-                          </div>
-
-                          {/* Aggregation + static toggle */}
-                          <div className="flex flex-wrap gap-2 items-center">
-                            <div>
-                              <label className="text-xs text-gray-500 mb-0.5 block">Aggregation</label>
-                              <select
-                                value={col.aggregation_type}
-                                onChange={e => updateColumn(idx, { aggregation_type: e.target.value as AggregationType })}
-                                className="input"
-                                style={{ fontSize: 14, height: 36, padding: '0 8px' }}
-                              >
-                                {AGG_OPTIONS.map(o => (
-                                  <option key={o.value} value={o.value}>{o.label}</option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 mt-4">
-                              <input
-                                type="checkbox"
-                                id={`static-${idx}`}
-                                checked={col.is_static}
-                                onChange={e => updateColumn(idx, { is_static: e.target.checked })}
-                                className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600"
-                              />
-                              <label htmlFor={`static-${idx}`} className="text-xs text-gray-600">
-                                Static (station data)
-                              </label>
-                            </div>
-                          </div>
-
-                          {/* Static source */}
-                          {col.is_static && (
-                            <div>
-                              <label className="text-xs text-gray-500 mb-0.5 block">Source path</label>
-                              <input
-                                type="text"
-                                value={col.static_source}
-                                onChange={e => updateColumn(idx, { static_source: e.target.value })}
-                                className="input"
-                                style={{ fontSize: 14, height: 36, padding: '0 8px', fontFamily: 'monospace' }}
-                                placeholder="e.g. station.name or user.full_name"
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Remove */}
-                        <button
-                          onClick={() => removeColumn(idx)}
-                          className="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0 mt-0.5"
-                          title="Remove this column"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                  <p className="mt-2 text-xs text-gray-400">
+                    You can repeat this for each sheet — publish once per sheet or combine into one template.
+                  </p>
                 </div>
               )}
+
+              {/* Publish */}
+              {showPublishConfirm ? (
+                <div className="card p-4 border-orange-200 bg-orange-50 space-y-3">
+                  <p className="text-sm font-medium text-orange-900">Publish this version?</p>
+                  {(() => {
+                    const tpl = templates?.find((t: any) => t.id === selectedTemplateId);
+                    const ver = activeVersions?.find((v: any) => v.template_id === selectedTemplateId);
+                    return (
+                      <p className="text-xs text-orange-700">
+                        This will create a new version for <span className="font-semibold">{tpl?.name ?? 'the selected template'}</span>
+                        {ver ? ` (currently v${ver.version_number} with ${ver.col_count} columns)` : ''} and replace it with <span className="font-semibold">{columns.length} columns</span> from <span className="font-semibold">{uploadedFile?.name}</span>.
+                        Existing service entries are not affected.
+                      </p>
+                    );
+                  })()}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setShowPublishConfirm(false); publishMutation.mutate(); }}
+                      disabled={publishMutation.isPending}
+                      className="btn btn-primary flex-1 text-sm"
+                    >
+                      {publishMutation.isPending ? 'Publishing…' : 'Yes, publish'}
+                    </button>
+                    <button
+                      onClick={() => setShowPublishConfirm(false)}
+                      className="btn btn-ghost flex-1 text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowPublishConfirm(true)}
+                  disabled={!selectedTemplateId || !uploadedFile || columns.length === 0 || publishMutation.isPending}
+                  className="btn btn-primary w-full"
+                >
+                  Publish Template
+                </button>
+              )}
+            </div>
+
+            {/* ── Right panel — column editor ──────────── */}
+            <div className="lg:col-span-2">
+              <div className="card p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-semibold text-gray-900">
+                    Detected Columns
+                    {columns.length > 0 && (
+                      <span className="ml-2 text-xs font-normal text-gray-400">({columns.length} columns from "{activeSheet}")</span>
+                    )}
+                  </h2>
+                </div>
+
+                {columns.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <p className="text-sm text-gray-400">
+                      {uploadedFile ? 'No headers detected. Try a different sheet.' : 'Upload an Excel file to see its columns here.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                    {/* Legend */}
+                    <div className="flex flex-wrap gap-3 text-xs text-gray-500 pb-2 border-b border-gray-100">
+                      {AGG_OPTIONS.map(o => (
+                        <span key={o.value}>
+                          <span className="font-medium text-gray-700">{o.label}</span> — {o.desc}
+                        </span>
+                      ))}
+                    </div>
+
+                    {columns.map((col, idx) => (
+                      <div key={idx} style={{
+                        border: `1px solid rgba(255,255,255,0.11)`,
+                        borderRadius: 10,
+                        padding: 12,
+                        background: 'rgba(255,255,255,0.03)',
+                      }}>
+                        <div className="flex items-start gap-3">
+                          {/* Column index badge */}
+                          <div className="w-7 h-7 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500 font-mono flex-shrink-0 mt-0.5">
+                            {col.col_index + 1}
+                          </div>
+
+                          <div className="flex-1 space-y-2 min-w-0">
+                            {/* Header text (read-only) + display label (editable) */}
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-xs text-gray-400 mb-0.5">Excel header</p>
+                                <p className="text-xs font-mono text-gray-700 truncate" title={col.header_text}>
+                                  {col.header_text}
+                                </p>
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-500 mb-0.5 block">Display label</label>
+                                <input
+                                  type="text"
+                                  value={col.display_label}
+                                  onChange={e => updateColumn(idx, { display_label: e.target.value })}
+                                  className="input"
+                                  style={{ fontSize: 14, height: 36, padding: '0 8px' }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* field_key */}
+                            <div>
+                              <label className="text-xs text-gray-500 mb-0.5 block">Field key (used in service entry form)</label>
+                              <input
+                                type="text"
+                                value={col.field_key}
+                                onChange={e => updateColumn(idx, { field_key: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+                                className="input"
+                                style={{ fontSize: 14, height: 36, padding: '0 8px', fontFamily: 'monospace' }}
+                              />
+                            </div>
+
+                            {/* Aggregation + static toggle */}
+                            <div className="flex flex-wrap gap-2 items-center">
+                              <div>
+                                <label className="text-xs text-gray-500 mb-0.5 block">Aggregation</label>
+                                <select
+                                  value={col.aggregation_type}
+                                  onChange={e => updateColumn(idx, { aggregation_type: e.target.value as AggregationType })}
+                                  className="input"
+                                  style={{ fontSize: 14, height: 36, padding: '0 8px' }}
+                                >
+                                  {AGG_OPTIONS.map(o => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 mt-4">
+                                <input
+                                  type="checkbox"
+                                  id={`static-${idx}`}
+                                  checked={col.is_static}
+                                  onChange={e => updateColumn(idx, { is_static: e.target.checked })}
+                                  className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600"
+                                />
+                                <label htmlFor={`static-${idx}`} className="text-xs text-gray-600">
+                                  Static (station data)
+                                </label>
+                              </div>
+                            </div>
+
+                            {/* Static source */}
+                            {col.is_static && (
+                              <div>
+                                <label className="text-xs text-gray-500 mb-0.5 block">Source path</label>
+                                <input
+                                  type="text"
+                                  value={col.static_source}
+                                  onChange={e => updateColumn(idx, { static_source: e.target.value })}
+                                  className="input"
+                                  style={{ fontSize: 14, height: 36, padding: '0 8px', fontFamily: 'monospace' }}
+                                  placeholder="e.g. station.name or user.full_name"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Remove */}
+                          <button
+                            onClick={() => removeColumn(idx)}
+                            className="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0 mt-0.5"
+                            title="Remove this column"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+
+      {/* ── Delete template confirmation modal ──── */}
+      {
+        confirmDeleteId && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.6)' }}>
+            <div style={{ background: 'rgba(18,21,28,0.97)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 16, padding: 28, maxWidth: 380, width: 'calc(100% - 32px)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
+              <h2 style={{ color: '#F5F7FA', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Delete this template?</h2>
+              <p style={{ color: '#9CA3AF', fontSize: 14, marginBottom: 8 }}>
+                <strong style={{ color: '#F5F7FA' }}>{templates?.find((t: any) => t.id === confirmDeleteId)?.name}</strong>
+              </p>
+              <p style={{ color: '#6B7280', fontSize: 13, marginBottom: 24 }}>
+                All versions and column mappings will be permanently deleted. Existing service entries are not affected.
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => handleDeleteTemplate(confirmDeleteId)}
+                  disabled={deletingTemplateId === confirmDeleteId}
+                  style={{ flex: 1, height: 42, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, color: '#FCA5A5', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                  {deletingTemplateId === confirmDeleteId ? 'Deleting…' : 'Yes, delete'}
+                </button>
+                <button onClick={() => setConfirmDeleteId(null)}
+                  style={{ flex: 1, height: 42, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, color: '#9CA3AF', fontSize: 14, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </>
   );
 }
