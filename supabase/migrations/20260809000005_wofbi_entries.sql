@@ -33,6 +33,11 @@ CREATE TRIGGER set_wofbi_entries_updated_at
 -- RLS
 ALTER TABLE wofbi_entries ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can read own station wofbi entries" ON wofbi_entries;
+DROP POLICY IF EXISTS "Users can insert own station wofbi entries" ON wofbi_entries;
+DROP POLICY IF EXISTS "Users can update own station wofbi entries" ON wofbi_entries;
+DROP POLICY IF EXISTS "Supervisors can read descendant wofbi entries" ON wofbi_entries;
+
 CREATE POLICY "Users can read own station wofbi entries"
   ON wofbi_entries FOR SELECT
   USING (
